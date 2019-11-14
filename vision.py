@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+HORIZONTAL_PIXELS = 640
+FOV = 53#in degrees
+
 cap = cv2.VideoCapture(0)#enable video capture
 
 img2 = cv2.imread('redstar.jpg',-1)#this needs to be the target image shape we will use to compare to the image taken by the camera
@@ -62,7 +65,7 @@ while True:
 	for contour in contours:
 		area = cv2.contourArea(contour)
 		#We do not want to create contours with random clutter. Use contours with a large number of pixels only
-		if area > 1000:#This value might be too big right now
+		if area > 600:#This value might be too big right now
 			M = cv2.moments(contour)
 			cX = int(M["m10"] / M["m00"])
 			cY = int(M["m01"] / M["m00"])
@@ -71,10 +74,13 @@ while True:
 			cv2.drawContours(frame, hull, -1, (0,255,0), 3)
 			cv2.drawContours(res, hull, -1, (0,255,0), 3)
 			#Instead of drawing a literal line we will need to find the cX for the purpose of localization.
-			cv2.line(res, (cX,0), (cX,640), red, thickness=3)
 			comparisonA = cv2.matchShapes(contour,cnt2,1,0.0)		
-			if comparisonA < .05:	#More testing may be needed for an ideal value here
-				print(comparisonA)#prints the comparison data for testing purposes
+			if comparisonA < .04:	#More testing may be needed for an ideal value here
+				#print(comparisonA)#prints the comparison data for testing purposes
+				#print(cX)#maybe send angle relative to robot instead?
+				cv2.line(res, (cX,0), (cX,HORIZONTAL_PIXELS), red, thickness=3)
+				angle = FOV - (cX/(HORIZONTAL_PIXELS/FOV))
+				print(angle)
 				#Need to implement send cX to localization
 
 	#FOR TESTING ONLY
