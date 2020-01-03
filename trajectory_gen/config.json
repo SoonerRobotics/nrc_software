@@ -1,0 +1,139 @@
+{
+    "course":
+    {
+        "segments":
+        [
+            {
+                "heading": 0,
+                "id": 0,
+                "length":5,
+                "max_speed": 5,
+                "max_accel": 2,
+                "min_speed": 1,
+                "offset": 1
+            },
+            {
+                "heading": 90,
+                "id": 1,
+                "length":10,
+                "max_speed": 5,
+                "max_accel": 2,
+                "min_speed": 1,
+                "offset": 1
+            },
+            {
+                "heading": 180,
+                "id": 2,
+                "length":10,
+                "max_speed": 5,
+                "max_accel": 2,
+                "min_speed": 1,
+                "offset": 1
+            },
+            {
+                "heading": 315,
+                "id": 3,
+                "length":7.07,
+                "max_speed": 5,
+                "max_accel": 2,
+                "min_speed": 1,
+                "offset": 1
+            },
+            {
+                "heading": 225,
+                "id": 4,
+                "length":7.07,
+                "max_speed": 5,
+                "max_accel": 2,
+                "min_speed": 1,
+                "offset": 1
+            },
+            {
+                "heading": 0,
+                "id": 5,
+                "length":5,
+                "max_speed": 5,
+                "max_accel": 2,
+                "min_speed": 1,
+                "offset": 1
+            }
+        ],
+        "ramp":
+        {
+
+            "width": 1,
+            "left_offset": 2,
+            "dist_along_segment": 12,
+            "min_speed": 4
+        },
+        "hoop":
+        {
+            "attempt": false,
+            "width":1,
+            "left_offset":1,
+            "node_offset":1
+        }
+    },
+
+    "robot":
+    {
+        "length": 0.4,
+        "wheel_spacing": 0.2,
+        "wheel_radius": 0.1,
+        "max_speed": 10,
+        "max_accel": 6
+    },
+
+    "waypoints":
+    [
+        {
+            "id":0,
+            "x":0,
+            "y":-1,
+            "heading":0,
+            "type":"start"
+        },
+        {
+            "id":1,
+            "x":5,
+            "y":-1,
+            "heading":0,
+            "type":"turn_start"
+        },
+        {
+            "id":2,
+            "x":6,
+            "y":1,
+            "heading":90,
+            "type":"turn_end"
+        },
+        {
+            "id":3,
+            "x":6,
+            "y":10,
+            "heading":90,
+            "type":"turn_start"
+        },
+        {
+            "id":4,
+            "x":5,
+            "y":11,
+            "heading":180,
+            "type":"turn_end"
+        },
+        {
+            "id":5,
+            "x":-5,
+            "y":11,
+            "heading":180,
+            "type":"turn_start"
+        },
+        {
+            "id":6,
+            "x":-6,
+            "y":10,
+            "heading":270,
+            "type":"turn_start"
+        }
+    ]
+}
