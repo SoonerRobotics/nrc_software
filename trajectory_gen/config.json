@@ -51,16 +51,11 @@
             {
                 "heading": 0,
                 "id": 5,
-                "length":5,
-                "max_speed": 5,
-                "max_accel": 2,
-                "min_speed": 1,
-                "offset": 1
+                "length":5
             }
         ],
         "ramp":
         {
-
             "width": 1,
             "left_offset": 2,
             "dist_along_segment": 12,
@@ -80,8 +75,13 @@
         "length": 0.4,
         "wheel_spacing": 0.2,
         "wheel_radius": 0.1,
-        "max_speed": 10,
-        "max_accel": 6
+        "max_speed": 5,
+        "max_accel": 3
+    },
+
+    "settings":
+    {
+        "traj_dist": 0.5
     },
 
     "waypoints":
@@ -91,49 +91,96 @@
             "x":0,
             "y":-1,
             "heading":0,
-            "type":"start"
+            "type":"start_pt",
+            "speed": 0
         },
         {
             "id":1,
             "x":5,
             "y":-1,
             "heading":0,
-            "type":"turn_start"
+            "type":"turn_start",
+            "speed": 2
         },
         {
             "id":2,
             "x":6,
             "y":1,
             "heading":90,
-            "type":"turn_end"
+            "type":"turn_end",
+            "speed": 2
         },
         {
             "id":3,
             "x":6,
             "y":10,
             "heading":90,
-            "type":"turn_start"
+            "type":"turn_start",
+            "speed": 2
         },
         {
             "id":4,
             "x":5,
             "y":11,
             "heading":180,
-            "type":"turn_end"
+            "type":"turn_end",
+            "speed": 2
         },
         {
             "id":5,
             "x":-5,
             "y":11,
             "heading":180,
-            "type":"turn_start"
+            "type":"turn_start",
+            "speed": 2
         },
         {
             "id":6,
             "x":-6,
             "y":10,
-            "heading":270,
-            "type":"turn_start"
+            "heading":315,
+            "type":"turn_end",
+            "speed": 2
+        },
+        {
+            "id":7,
+            "x":-2,
+            "y":6,
+            "heading":315,
+            "type":"turn_start",
+            "speed": 2
+        },
+        {
+            "id":8,
+            "x":-2,
+            "y":4,
+            "heading":225,
+            "type":"turn_end",
+            "speed": 2
+        },
+        {
+            "id":9,
+            "x":-5,
+            "y":1,
+            "heading":225,
+            "type":"turn_start",
+            "speed": 2
+        },
+        {
+            "id":10,
+            "x":-5,
+            "y":-1,
+            "heading":0,
+            "type":"turn_end",
+            "speed": 2
+        },
+        {
+            "id":11,
+            "x":0,
+            "y":-1,
+            "heading":0,
+            "type":"end_pt",
+            "speed": 2
         }
     ]
 }
