@@ -3,7 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
-from math import cos, sin, radians, sqrt
+from math import cos, sin, radians, sqrt, pi, floor
 from scipy.interpolate import splprep, splev
 
 from segment import Segment
@@ -102,12 +102,18 @@ def create_straight_line(config, cur_wpt, next_wpt):
     max_speed = float(robot['max_speed'])
     max_accel = float(robot['max_accel'])
 
-    # coordinates
-    x1 = cur_wpt['x']
-    y1 = cur_wpt['y']
-    x2 = next_wpt['x']
-    y2 = next_wpt['y']
-    hdg = cur_wpt['heading']
+    # coordinates for the start point
+    if cur_wpt['type'] == "turn_end":
+        x1 = traj_pts[-1].x
+        y1 = traj_pts[-1].y
+    else:
+        x1 = float(cur_wpt['x'])
+        y1 = float(cur_wpt['y'])
+
+    # coordinates for the end point
+    x2 = float(next_wpt['x'])
+    y2 = float(next_wpt['y'])
+    hdg = float(cur_wpt['heading'])
 
     # Distance between waypoints
     dist = sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -118,15 +124,14 @@ def create_straight_line(config, cur_wpt, next_wpt):
 
     # Find duration needed to achieve cruise velocity
     if len(traj_pts) == 0:
-        t0 = 0
+        t0 = 0.0
     else:
-        t0 = traj_pts[-1].t
+        t0 = float(traj_pts[-1].t)
     t_cruise = (next_vel - cur_vel) / max_accel
 
     # Find how much distance remains once cruise velocity is achieved
     dist_at_cruise = cur_vel*t_cruise + 0.5*max_accel*t_cruise**2
     dist_remain_cruise = dist - dist_at_cruise
-    print(dist_at_cruise)
 
     # If the acceleration is too great, cancel the trajectory with an error message
     if dist_remain_cruise < 0:
@@ -156,6 +161,69 @@ def create_straight_line(config, cur_wpt, next_wpt):
 
     return 0
 
+
+def create_turn(params, cur_wpt, next_wpt):
+    # HACK: this circle heuristic is a total hack. Using splines or actual physics would be better.
+
+    # general settings
+    settings = params['settings']
+    hdg_eps = float(settings['hdg_eps'])
+
+    # robot settings
+    robot = params['robot']
+    max_speed = float(robot['max_speed'])
+
+    # Coordinates
+    x1 = float(cur_wpt['x'])
+    y1 = float(cur_wpt['y'])
+    x2 = float(next_wpt['x'])
+    y2 = float(next_wpt['y'])
+    hdg1 = float(cur_wpt['heading'])
+    hdg2 = float(next_wpt['heading'])
+
+    # Distance between waypoints
+    dist = sqrt((x1-x2)**2 + (y1-y2)**2)
+
+    # Assume the waypoints are always on the same diameter
+    radius = dist / 2
+
+    # Velocities
+    cur_vel = float(min(cur_wpt['speed'], max_speed))
+    next_vel = float(min(next_wpt['speed'], max_speed))
+    avg_vel = (cur_vel + next_vel) / 2
+
+    # Calculate degrees the circle will rotate
+    hdg_diff = hdg2 - hdg1
+
+    # Calculate how long this turn will take
+    t0 = 0.0 if len(traj_pts) == 0 else float(traj_pts[-1].t)
+    tf = (2 * pi * radius / avg_vel) * (abs(hdg_diff) / 360) + t0
+    arc_len = (tf-t0) * avg_vel
+
+    # Go around the circle until the course change has been made
+    if hdg_diff < 0:
+        hdg_eps = -hdg_eps
+
+    # track the sweep
+    num_segs = int(floor(hdg_diff / hdg_eps)) + 1
+    seg_len = arc_len / num_segs
+
+    # Initialize turn vars
+    x = x1
+    y = y1
+    hdg = hdg1
+
+    for i in range(num_segs):
+        t = (i+1) * (tf - t0) / num_segs + t0
+        hdg = hdg + hdg_eps
+        x_new = x + seg_len * cos(radians(hdg))
+        y_new = y + seg_len * sin(radians(hdg))
+        x = x_new
+        y = y_new
+        traj_pt = TrajectoryPoint(t, x_new, y_new, avg_vel, 0, hdg)
+        traj_pts.append(traj_pt)
+
+    return 0
 
 
 def simple_trajectory_generation(params):
@@ -187,7 +255,7 @@ def simple_trajectory_generation(params):
             result = create_straight_line(params, cur_wpt, next_wpt)
         # Otherwise, turn starting from the current waypoint and ending at the next waypoint
         else:
-            pass
+            result = create_turn(params, cur_wpt, next_wpt)
 
         # if there are errors, cancel the trajectory generation
         if result < 0:
@@ -196,6 +264,16 @@ def simple_trajectory_generation(params):
         # Pass the types to the next step
         last_type = cur_type
 
+
+def plot_traj_points():
+    x = []
+    y = []
+
+    for traj_pt in traj_pts:
+        x.append(traj_pt.x)
+        y.append(traj_pt.y)
+
+    plt.plot(x, y, marker='x', color='g')
 
 
 
@@ -218,6 +296,9 @@ if __name__ == "__main__":
 
     # Perform simple trajectory generation to make the trajectory points
     simple_trajectory_generation(params)
+
+    # Plot the trajectory points
+    plot_traj_points()
 
     # Export data to CSV
     csv_out = open("output_traj.csv", "w")
