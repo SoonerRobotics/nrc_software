@@ -18,7 +18,7 @@ Motor leftMotor, rightMotor;
 
 // Drivetrain output parameters
 float turnPower;
-float drivePower = 0.25;
+float drivePower;
 
 
 
@@ -32,6 +32,8 @@ float targetAngle = 0.0;
 
 // Velocity Estimators
 TrackingLoop left_tracking, right_tracking;
+float currentSpeed;
+float targetSpeed = 0.0;
 
 
 
@@ -40,8 +42,8 @@ TrackingLoop left_tracking, right_tracking;
 /////////////////////////////////
 
 // Serial Send/Receive
-StaticJsonDocument<256> recv_pkt;
-StaticJsonDocument<256> send_pkt;
+StaticJsonDocument<128> recv_pkt;
+StaticJsonDocument<128> send_pkt;
 
 
 
@@ -92,13 +94,13 @@ float angleDiff(float a,float b)
 // Left Encoder
 void left_encoder_isr()
 {
-    left_encoder.process();
+    leftEncoder.process();
 }
 
 // Right Encoder
 void right_encoder_isr()
 {
-    right_encoder.process();
+    rightEncoder.process();
 }
 
 
@@ -132,8 +134,8 @@ void setup()
     rightMotor.begin(8,7,9);
 
     // Set up the encoders
-    leftEncoder.begin(LEFT_ENC_A, LEFT_ENC_B);
-    rightEncoder.begin(RIGHT_ENC_A, RIGHT_ENC_B);
+    leftEncoder.begin(LEFT_ENC_A, LEFT_ENC_B, 1);
+    rightEncoder.begin(RIGHT_ENC_A, RIGHT_ENC_B, 1);
 
     // Attach encoder interrupts
     attachInterrupt(digitalPinToInterrupt(LEFT_ENC_A), &left_encoder_isr, CHANGE);
@@ -150,8 +152,12 @@ void loop()
 
 
     // Tracking loops for wheel velocities
-    left_tracking.update(left_encoder.getValue());
-    right_tracking.update(right_encoder.getValue());
+    left_tracking.update(leftEncoder.getValue());
+    right_tracking.update(rightEncoder.getValue());
+
+
+    // Calculate current speed
+    currentSpeed = 0.5 * (left_tracking.getVelocityEstimate() + right_tracking.getVelocityEstimate())
 
 
     // Sensor data update
@@ -162,6 +168,7 @@ void loop()
 
     // Send data over serial
     serializeJson(send_pkt, Serial);
+    Serial.println();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,12 +179,15 @@ void loop()
     {
         deserializeJson(recv_pkt, Serial);
 
-        //drivePower = recv_pkt["drive_power"];   // TODO: replace with target velocity and then make a PID for drive power
+        targetSpeed = recv_pkt["target_speed"];
         targetAngle = recv_pkt["target_yaw"];
     }
 
     // Achieve the current target heading by locking the IMU to the desired yaw
     turnPower = yawController.update(0, angleDiff(constrainAngle(euler.x()), targetAngle));
+
+    // Achieve the current target speed by updating drivePower based on current speed
+    drivePower = speedController.update(targetSpeed, currentSpeed);
 
     // Output to the motors
     leftMotor.output(drivePower - turnPower);
