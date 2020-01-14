@@ -30,10 +30,13 @@ float drivePower;
 PIDController yawController;
 float targetAngle = 0.0;
 
+// Speed control
+PIDController speedController;
+float targetSpeed = 0.0;
+
 // Velocity Estimators
 TrackingLoop left_tracking, right_tracking;
 float currentSpeed;
-float targetSpeed = 0.0;
 
 
 
@@ -57,7 +60,7 @@ StaticJsonDocument<128> send_pkt;
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
-imu::Vector<3> euler;
+imu::Vector<3> euler, accel;
 sensors_event_t event;
 
 // Encoders
@@ -149,6 +152,7 @@ void loop()
     // BNO055 sensor data
     bno.getEvent(&event);
     euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+    accel = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
 
     // Tracking loops for wheel velocities
@@ -157,7 +161,7 @@ void loop()
 
 
     // Calculate current speed
-    currentSpeed = 0.5 * (left_tracking.getVelocityEstimate() + right_tracking.getVelocityEstimate())
+    currentSpeed = 0.5 * (left_tracking.getVelocityEstimate() + right_tracking.getVelocityEstimate());
 
 
     // Sensor data update
@@ -165,6 +169,7 @@ void loop()
     send_pkt["yaw"] = euler.x();
     send_pkt["left_vel"] = left_tracking.getVelocityEstimate();
     send_pkt["right_vel"] = right_tracking.getVelocityEstimate();
+    send_pkt["acceleration"] = accel.x();
 
     // Send data over serial
     serializeJson(send_pkt, Serial);
