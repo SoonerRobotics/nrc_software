@@ -4,6 +4,9 @@ import json
 import rospy
 import serial
 
+import time
+import csv
+from numpy import genfromtxt
 
 from nrc_msgs.msg import DriveStatus, DriveCommand
 
@@ -55,22 +58,38 @@ status_pub = None
 
 
 def update_status(status_msg):
-    # get values from spreadsheet for most recent status
-    #   use library "pandas" to go from excel to numpy or straight to here
-    # use a global timer to get current time relative to start
+    # get local time at every tick to compare to the path-gen (in seconds)
+    local_time = time.ctime(start_time)
+    
+    # csv is generated with path, based on time passed since start
+    my_data = genfromtxt('my_file.csv', delimiter=',', skipheader=1, names="time,v,accel,hdg")
+    # TODO check file to make sure column names are right
+    # TODO figure out how to actually get the csv
+
+    most_recent_time_index = round(truncate(local_time))
+    most_recent_row = my_data[most_recent_time_index]
+
+    recent_time = most_recent_row[0]
+    vel = most_recent_row[1]
+    accel = most_recent_row[2]
+    hdg = most_recent_row[3]
 
     # use heading of most recent time in spreadsheet without interpolation
-    new_heading = status_msg.hdg
+    new_heading = hdg
     # calculate desired velocity by taking most recent time's velocity and interpolating with accel and time
-    new_velocity = status_msg.vel + status_msg.accel * (current_time - status_msg.time)
+    new_velocity = vel + accel * (local_time - recent_time)
 
     command_msg = DriveCommand()
-    command_msg.speed = new_velocity
     command_msg.heading = new_heading
+    command_msg.speed = new_velocity
     status_pub.publish(command_msg)
 
 
 if __name__ == "__main__":
+    # seconds passed since epoch
+    start_time = time.time()
+    # use this to get local_time at every tick
+
     # Initialize ROS node
     rospy.init_node("nrc_drive_dr")
 
