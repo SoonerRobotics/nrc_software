@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import rospy
+import rospkg
 
 import time
 import csv
@@ -19,22 +20,29 @@ instructions = None
 
 
 def generate_drive_command(timer_event):
-    # make sure we can access the global time
+    # make sure we can access the global time and instruction_index
     global start_time
+    global instruction_index
+    global instructions
+    global command_pub
     # get local time at every tick to compare to the path-gen (in seconds)
-    local_time = time.ctime(start_time)
+    local_time = time.time() - start_time
 
-    # use local time to update most recent instruction
-    while instructions[instruction_index + 1][0] < local_time:
-        # if current time has passed the next instruction's time, switch "most recent" to it
-        instruction_index += 1
+    if instruction_index < len(instructions)-1:
+        # don't got past the end of the instructions
+        # use local time to update most recent instruction
+        while instructions[instruction_index + 1][0] < local_time:
+            # if current time has passed the next instruction's time, switch "most recent" to it
+            instruction_index += 1
+            if instruction_index >= len(instructions)-1:
+                break
 
     # pull variables we need from most recent instruction
-    instruction_time = my_data[instruction_index][0]
+    instruction_time = instructions[instruction_index][0]
     # can get x and y from positions 1 and 2 when needed
-    vel = my_data[instruction_index][3]
-    accel = my_data[instruction_index][4]
-    hdg = my_data[instruction_index][5]
+    vel = instructions[instruction_index][3]
+    accel = instructions[instruction_index][4]
+    hdg = instructions[instruction_index][5]
 
     # use heading of most recent instruction without interpolation
     new_heading = hdg
@@ -50,17 +58,23 @@ def generate_drive_command(timer_event):
 if __name__ == "__main__":
     # seconds passed since epoch (global time, used to find local time at every call)
     start_time = time.time()
+    # initialize with first instruction
+    instruction_index = 0
+
+    # get an instance of RosPack with the default search paths
+    rospack = rospkg.RosPack()
+    filepath = rospack.get_path('nrc_nav') + "/src/"
 
     # csv is generated with path, based on time passed since start
     # will need to make sure to copy file into this directory after creating it in trajectory_gen
     # will need to test how this works when the node is run from a launch file
-    instructions = genfromtxt('output_traj.csv', delimiter=',', skipheader=1, names="time,x,y,velocity,accel,heading")
+    instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
     # Initialize ROS node
     rospy.init_node("nrc_drive_dr")
 
     # Set up a publisher for publishing the drive command
-    command_pub = rospy.Publisher("/nrc/cmd", DriveCommand, generate_drive_command, queue_size=1)
+    command_pub = rospy.Publisher("/nrc/cmd", DriveCommand, queue_size=1)
 
     # Set up a timer to read the sensor data at 10 Hz
     update_timer = rospy.Timer(rospy.Duration(secs=0.1), generate_drive_command)
