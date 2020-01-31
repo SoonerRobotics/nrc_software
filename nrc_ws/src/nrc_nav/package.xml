@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>nrc_nav</name>
+  <version>0.0.0</version>
+  <description>The nrc_nav package</description>
+
+  <maintainer email="kevin.robb@ou.edu">kevinrobb</maintainer>
+
+  <license>MIT</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>nrc_msgs</build_depend>
+  <build_export_depend>nrc_msgs</build_export_depend>
+  <exec_depend>nrc_msgs</exec_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
