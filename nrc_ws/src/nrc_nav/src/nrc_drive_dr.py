@@ -74,7 +74,7 @@ if __name__ == "__main__":
     rospy.init_node("nrc_drive_dr")
 
     # Set up a publisher for publishing the drive command
-    command_pub = rospy.Publisher("/nrc/cmd", DriveCommand, queue_size=1)
+    command_pub = rospy.Publisher("/nrc/path_cmd", DriveCommand, queue_size=1)
 
     # Set up a timer to read the sensor data at 10 Hz
     update_timer = rospy.Timer(rospy.Duration(secs=0.1), generate_drive_command)
