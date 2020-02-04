@@ -38,9 +38,9 @@ def send_command(status):
     # set the new heading as the average of the current heading and the commanded heading
     drive_cmd.heading = (cmd_heading + status.yaw) / 2
     # set the speed as the average of the current speed and the commanded speed
-    drive_cmd.speed = (cmd_speed + (status.left_vel + status.right_vel) / 2) / 2
+    drive_cmd.speed = (cmd_speed + (status.left_speed + status.right_speed) / 2) / 2
     # publish the motor command
-    command_pub.publish(motor_cmd)
+    command_pub.publish(drive_cmd)
 
 
 if __name__ == "__main__":
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     command_pub = rospy.Publisher("/nrc/cmd", DriveCommand, queue_size=1)
 
     # Set up a timer to read the sensor data at 20 Hz
-    update_timer = rospy.Timer(rospy.Duration(secs=0.05), send_motor_cmd)
+    #update_timer = rospy.Timer(rospy.Duration(secs=0.05), send_motor_cmd)
 
     # Pump callbacks
     rospy.spin()

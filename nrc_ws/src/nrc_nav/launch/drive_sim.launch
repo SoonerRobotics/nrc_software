@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="nrc_nav" type="nrc_drive_dr.py" name="nrc_drive_dr" output="screen" />
+
+    <node pkg="nrc_nav" type="sim_output.py" name="sim_output" output="screen" />
+
+</launch>
