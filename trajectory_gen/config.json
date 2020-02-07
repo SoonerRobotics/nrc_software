@@ -6,7 +6,7 @@
             {
                 "heading": 0,
                 "id": 0,
-                "length":5,
+                "length":9,
                 "max_speed": 5,
                 "max_accel": 2,
                 "min_speed": 1,
@@ -15,7 +15,7 @@
             {
                 "heading": 90,
                 "id": 1,
-                "length":10,
+                "length":24,
                 "max_speed": 5,
                 "max_accel": 2,
                 "min_speed": 1,
@@ -24,25 +24,25 @@
             {
                 "heading": 180,
                 "id": 2,
-                "length":10,
+                "length":18,
                 "max_speed": 5,
                 "max_accel": 2,
                 "min_speed": 1,
                 "offset": 1
             },
             {
-                "heading": 315,
+                "heading": 293,
                 "id": 3,
-                "length":7.07,
+                "length":15.3,
                 "max_speed": 5,
                 "max_accel": 2,
                 "min_speed": 1,
                 "offset": 1
             },
             {
-                "heading": 225,
+                "heading": 240,
                 "id": 4,
-                "length":7.07,
+                "length":11.6,
                 "max_speed": 5,
                 "max_accel": 2,
                 "min_speed": 1,
@@ -51,7 +51,7 @@
             {
                 "heading": 0,
                 "id": 5,
-                "length":5
+                "length":9
             }
         ],
         "ramp":
@@ -97,7 +97,7 @@
         },
         {
             "id":1,
-            "x":5,
+            "x":9,
             "y":-1,
             "heading":0,
             "type":"turn_start",
@@ -105,7 +105,7 @@
         },
         {
             "id":2,
-            "x":6,
+            "x":10,
             "y":1,
             "heading":90,
             "type":"turn_end",
@@ -113,63 +113,63 @@
         },
         {
             "id":3,
-            "x":6,
-            "y":10,
+            "x":10,
+            "y":23,
             "heading":90,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":4,
-            "x":5,
-            "y":11,
+            "x":9,
+            "y":24,
             "heading":180,
             "type":"turn_end",
             "speed": 2
         },
         {
             "id":5,
-            "x":-5,
-            "y":11,
+            "x":-8,
+            "y":24,
             "heading":180,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":6,
-            "x":-6,
-            "y":10,
+            "x":-8,
+            "y":22,
             "heading":315,
             "type":"turn_end",
             "speed": 2
         },
         {
             "id":7,
-            "x":-2,
-            "y":6,
+            "x":-3.5,
+            "y":11,
             "heading":315,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":8,
-            "x":-2,
-            "y":4,
+            "x":-4,
+            "y":8,
             "heading":225,
             "type":"turn_end",
             "speed": 2
         },
         {
             "id":9,
-            "x":-5,
-            "y":1,
+            "x":-8,
+            "y":2,
             "heading":225,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":10,
-            "x":-5,
+            "x":-8,
             "y":-1,
             "heading":360,
             "type":"turn_end",

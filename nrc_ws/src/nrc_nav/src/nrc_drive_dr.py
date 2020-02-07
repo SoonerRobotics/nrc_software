@@ -26,7 +26,10 @@ def generate_drive_command(timer_event):
     global instructions
     global command_pub
     # get local time at every tick to compare to the path-gen (in seconds)
-    local_time = time.time() - start_time
+    local_time = time.time() - start_time - 20 #TEMP delay to account for time to start simulator
+
+    if local_time <=0:
+        return
 
     if instruction_index < len(instructions)-1:
         # don't got past the end of the instructions
@@ -50,7 +53,16 @@ def generate_drive_command(timer_event):
     new_velocity = vel + accel * (local_time - instruction_time)
 
     drive_cmd = DriveCommand()
-    drive_cmd.heading = new_heading
+    drive_cmd.heading = 360 - new_heading
+
+# float constrainAngle(float x)
+# {
+#     x = fmod(x + 180,360);
+#     if (x < 0)
+#         x += 360;                                                                                 
+#     return x;
+# }
+
     drive_cmd.speed = new_velocity
     command_pub.publish(drive_cmd)
 

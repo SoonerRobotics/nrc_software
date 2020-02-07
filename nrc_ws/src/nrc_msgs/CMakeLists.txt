@@ -52,6 +52,7 @@ add_message_files(
   FILES
   DriveStatus.msg
   DriveCommand.msg
+  Motors.msg
 )
 
 ## Generate services in the 'srv' folder
