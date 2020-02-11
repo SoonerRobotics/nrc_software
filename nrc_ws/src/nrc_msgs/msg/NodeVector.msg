@@ -1,0 +1,8 @@
+float64 stanchion1Distance
+float64 stanchion1Angle
+float64 stanchion2Distance
+float64 stanchion2Angle
+float64 stanchion3Distance
+float64 stanchion3Angle
+float64 rampDistance
+float64 rampAngle
