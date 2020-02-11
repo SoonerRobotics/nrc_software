@@ -1,0 +1,9 @@
+<launch>
+
+    <param name="port" value="9090" />
+
+    <node pkg="localization" type="localization.py" name="localization" output="screen" />
+
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+</launch>
