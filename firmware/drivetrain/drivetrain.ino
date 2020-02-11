@@ -62,7 +62,7 @@ StaticJsonDocument<128> send_pkt;
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
-imu::Vector<3> euler, accel;
+imu::Vector<3> euler, accel, gravi;
 sensors_event_t event;
 
 // Encoders
@@ -173,6 +173,14 @@ void loop()
     bno.getEvent(&event);
     euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
     accel = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    gravi = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
+
+
+    // Check if flipped upside down and disable motors
+    if (gravi.z() < -8.0) {
+        leftMotor.disableOutput();
+	rightMotor.disableOutput();
+    }
 
 
     // Tracking loops for wheel velocities
