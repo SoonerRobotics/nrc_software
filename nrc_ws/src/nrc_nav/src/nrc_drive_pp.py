@@ -7,6 +7,7 @@ import time
 import csv
 from numpy import genfromtxt
 
+from nrc_pure_pursuit import PurePursuit
 from nrc_msgs.msg import DriveCommand
 
 # Global robot object
@@ -17,6 +18,16 @@ start_time = time.time()
 instruction_index = 0
 # instructions pulled in at the start of code running
 instructions = None
+# pure pursuit path
+pp = PurePursuit()
+
+def generate_pure_pursuit_path():
+    global pp
+    pp = PurePursuit()
+    for i in range(len(instructions)):
+        # add x,y coords from each point in the generated trajectory as waypoints.
+        # this is better than just adding the 5 nodes as waypoints.
+        pp.add_point(instructions[i][1], instructions[i][2])
 
 
 def generate_drive_command(timer_event):
@@ -32,22 +43,15 @@ def generate_drive_command(timer_event):
         # don't start until the initial delay is passed (to wait for the sim to load)
         # and stop after the last instruction has been followed
         return
-    # elif local_time > instructions[len(instructions) - 1][0] + 5:
-    #     # stop the bot when it has run out of commands
-    #     drive_cmd = DriveCommand()
-    #     drive_cmd.heading = 0
-    #     drive_cmd.speed = 0
-    #     command_pub.publish(drive_cmd)
-    #     return
 
-    #if instruction_index <= len(instructions)-1:
+    if instruction_index < len(instructions)-1:
         # don't got past the end of the instructions
         # use local time to update most recent instruction
-    while instruction_index < len(instructions)-1 and instructions[instruction_index + 1][0] < local_time:
-        # if current time has passed the next instruction's time, switch "most recent" to it
-        instruction_index += 1
-        if instruction_index >= len(instructions)-1:
-            break
+        while instructions[instruction_index + 1][0] < local_time:
+            # if current time has passed the next instruction's time, switch "most recent" to it
+            instruction_index += 1
+            if instruction_index >= len(instructions)-1:
+                break
 
     # pull variables we need from most recent instruction
     instruction_time = instructions[instruction_index][0]
@@ -63,18 +67,6 @@ def generate_drive_command(timer_event):
 
     drive_cmd = DriveCommand()
     drive_cmd.heading = 360 - new_heading
-
-    if new_heading > 355:
-        drive_cmd.heading = new_heading
-
-# # may need to use this to set the heading instead of 360 - hdg
-# float constrainAngle(float x)
-# {
-#     x = fmod(x + 180,360);
-#     if (x < 0)
-#         x += 360;                                                                                 
-#     return x;
-# }
 
     drive_cmd.speed = new_velocity
     command_pub.publish(drive_cmd)
