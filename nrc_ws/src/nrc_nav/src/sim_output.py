@@ -45,6 +45,7 @@ def send_command(status):
 
     # publish the motor command
     #command_pub.publish(motors)
+    # TODO uncomment this and remove the 4 lines below when the simulator can accept Motors instead of DriveCommand
 
     # TEMP sim needs DriveCommand
     drive_cmd = DriveCommand()
@@ -63,11 +64,8 @@ if __name__ == "__main__":
     command_sub = rospy.Subscriber("/nrc/path_cmd", DriveCommand, receive_drive_command, queue_size=1)
     status_sub = rospy.Subscriber("/nrc/sensor_data", DriveStatus, send_command, queue_size=1)
 
-    # Set up a publisher for publishing to the motors #TODO change DriveCommand to Motors once sim can accept it
+    # Set up a publisher for publishing to the motors #TODO change DriveCommand to Motors and topic to /nrc/motors once sim can accept it
     command_pub = rospy.Publisher("/nrc/cmd", DriveCommand, queue_size=1)
-
-    # Set up a timer to read the sensor data at 20 Hz
-    #update_timer = rospy.Timer(rospy.Duration(secs=0.05), send_motor_cmd)
 
     # Pump callbacks
     rospy.spin()
