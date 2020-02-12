@@ -26,16 +26,18 @@ def generate_drive_command(timer_event):
     global instructions
     global command_pub
     # get local time at every tick to compare to the path-gen (in seconds)
-    local_time = time.time() - start_time
+    local_time = time.time() - start_time - 15 #TEMP delay to account for time to start simulator
 
-    if instruction_index < len(instructions)-1:
-        # don't got past the end of the instructions
-        # use local time to update most recent instruction
-        while instructions[instruction_index + 1][0] < local_time:
-            # if current time has passed the next instruction's time, switch "most recent" to it
-            instruction_index += 1
-            if instruction_index >= len(instructions)-1:
-                break
+    if local_time <=0 or local_time > instructions[len(instructions) - 1][0] + 10:
+        # don't start until the initial delay is passed (to wait for the sim to load)
+        # and stop after the last instruction has been followed
+        return
+
+    # don't go past the end of the instructions
+    # use local time to update most recent instruction
+    while instruction_index < len(instructions)-1 and instructions[instruction_index + 1][0] < local_time:
+        # if current time has passed the next instruction's time, switch "most recent" to it
+        instruction_index += 1
 
     # pull variables we need from most recent instruction
     instruction_time = instructions[instruction_index][0]
@@ -50,7 +52,12 @@ def generate_drive_command(timer_event):
     new_velocity = vel + accel * (local_time - instruction_time)
 
     drive_cmd = DriveCommand()
-    drive_cmd.heading = new_heading
+    drive_cmd.heading = 360 - new_heading
+
+    if new_heading > 355:
+        # don't loop around to heading 0, but rather send 360
+        drive_cmd.heading = new_heading
+
     drive_cmd.speed = new_velocity
     command_pub.publish(drive_cmd)
 
@@ -74,7 +81,7 @@ if __name__ == "__main__":
     rospy.init_node("nrc_drive_dr")
 
     # Set up a publisher for publishing the drive command
-    command_pub = rospy.Publisher("/nrc/cmd", DriveCommand, queue_size=1)
+    command_pub = rospy.Publisher("/nrc/path_cmd", DriveCommand, queue_size=1)
 
     # Set up a timer to read the sensor data at 10 Hz
     update_timer = rospy.Timer(rospy.Duration(secs=0.1), generate_drive_command)
