@@ -19,7 +19,6 @@ vectorPub = None
 
 def localization_cb(sensor):
     global speed, heading, vectorPub, coordinates, lastTime
-    print("yeet")
 
     speed = (sensor.right_speed + sensor.left_speed) / 2
     heading = sensor.yaw
@@ -28,6 +27,7 @@ def localization_cb(sensor):
 
     localization_msg = LocalizationVector()
 
+    #calculated the delta for distance since last cycle
     localization_msg.x = speed * cos(radians(heading)) * elapsedTime
     localization_msg.y = speed * sin(radians(heading)) * elapsedTime * -1
 
