@@ -74,7 +74,6 @@ if __name__ == "__main__":
 
     # csv is generated with path, based on time passed since start
     # will need to make sure to copy file into this directory after creating it in trajectory_gen
-    # will need to test how this works when the node is run from a launch file
     instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
     # Initialize ROS node

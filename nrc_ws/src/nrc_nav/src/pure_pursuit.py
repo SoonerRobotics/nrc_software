@@ -1,48 +1,7 @@
-# this file copied from the igvc_software repo and will be used as a template to make nrc_pure_pursuit.py
-
+# this file taken from pure_pursuit.py from the igvc_software repo
 import math
 
 class PurePursuit:
-
-
-# Stuff from igvc_nav that uses pure_pursuit:
-
-# def timer_callback(event):
-#     if pos is None or heading is None:
-#         return
-
-#     lookahead = None
-#     radius = 0.4 # Start with a radius of 0.1 meters
-
-#     while lookahead is None and radius <= 2: # Look until we hit 2 meters max
-#         lookahead = pp.get_lookahead_point(pos[0], pos[1], radius)
-#         radius *= 1.25
-    
-#     if lookahead is not None:
-#         heading_to_la = 90 - math.atan2(lookahead[1] - pos[1], lookahead[0] - pos[0]) * 180 / (math.pi)
-#         if heading_to_la < 0:
-#             heading_to_la += 360
-
-#         # print('my x: ' + str(pos[0]))
-#         # print('my y: ' + str(pos[1]))
-
-#         # print('loc x: ' + str(lookahead[0]))
-#         # print('loc y: ' + str(lookahead[1]))
-
-#         # print('want to move x:' + str(lookahead[0] - pos[0]))
-#         # print('want to move y:' + str(lookahead[1] - pos[1]))
-
-#         # print('i think my heading is ' + str(heading))
-#         # print('i want heading ' + str(heading_to_la))
-#         delta = heading_to_la - heading
-#         delta = (delta + 180) % 360 - 180
-
-#         motor_pkt = motors()
-#         motor_pkt.left = 2 + 1 * (delta / 180)
-#         motor_pkt.right = 2 - 1 * (delta / 180)
-        
-#         publy.publish(motor_pkt)
-
 
     def __init__(self):
         self.path = []

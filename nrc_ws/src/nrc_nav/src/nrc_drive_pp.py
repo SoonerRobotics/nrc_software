@@ -1,25 +1,22 @@
 #! /usr/bin/env python
 
-import rospy
-import rospkg
+import rospy, rospkg
 
-import time
 import csv
+from math import atan2, pi
 from numpy import genfromtxt
 
-from nrc_pure_pursuit import PurePursuit
-from nrc_msgs.msg import DriveCommand
+from pure_pursuit import PurePursuit
+from nrc_msgs.msg import DriveCommand, LocalizationVector, DriveStatus, Motors
 
-# Global robot object
 command_pub = None
-# global time
-start_time = time.time()
-# time index for trajectory gen instructions
-instruction_index = 0
-# instructions pulled in at the start of code running
+# generated trajectory, pulled in once at start
 instructions = None
 # pure pursuit path
 pp = PurePursuit()
+# current position and heading
+pos = None
+heading = None
 
 def generate_pure_pursuit_path():
     global pp
@@ -29,52 +26,50 @@ def generate_pure_pursuit_path():
         # this is better than just adding the 5 nodes as waypoints.
         pp.add_point(instructions[i][1], instructions[i][2])
 
+def receive_position(local_pos):
+    # triggers when receiving position from David's localization code
+    global pos
+    pos = (local_pos.x, local_pos.y)
 
-def generate_drive_command(timer_event):
-    # make sure we can access the global time and instruction_index
-    global start_time
-    global instruction_index
-    global instructions
-    global command_pub
-    # get local time at every tick to compare to the path-gen (in seconds)
-    local_time = time.time() - start_time - 15 #TEMP delay to account for time to start simulator
+def receive_heading(status):
+    # triggers when sensors (IMU) publish sensor data, including yaw
+    global heading
+    heading = status.yaw
 
-    if local_time <=0 or local_time > instructions[len(instructions) - 1][0] + 10:
-        # don't start until the initial delay is passed (to wait for the sim to load)
-        # and stop after the last instruction has been followed
+
+def generate_motor_command(timer_event): 
+    # this function template was taken from igvc_nav_node.py
+    if pos is None or heading is None:
+        # wait until sensors/localization bring in data to do anything
         return
 
-    if instruction_index < len(instructions)-1:
-        # don't got past the end of the instructions
-        # use local time to update most recent instruction
-        while instructions[instruction_index + 1][0] < local_time:
-            # if current time has passed the next instruction's time, switch "most recent" to it
-            instruction_index += 1
-            if instruction_index >= len(instructions)-1:
-                break
+    # declare the look-ahead point
+    lookahead = None
+    # start with a search radius of 0.4 meters
+    radius = 0.4 
 
-    # pull variables we need from most recent instruction
-    instruction_time = instructions[instruction_index][0]
-    # can get x and y from positions 1 and 2 when needed
-    vel = instructions[instruction_index][3]
-    accel = instructions[instruction_index][4]
-    hdg = instructions[instruction_index][5]
+    # look until finding the path at the increasing radius or hitting 2 meters
+    while lookahead is None and radius <= 2: 
+        lookahead = pp.get_lookahead_point(pos[0], pos[1], radius)
+        radius *= 1.25
+    
+    # make sure we actually found the path
+    if lookahead is not None:
+        heading_to_la = 90 - atan2(lookahead[1] - pos[1], lookahead[0] - pos[0]) * 180 / (pi)
+        if heading_to_la < 0:
+            heading_to_la += 360
 
-    # use heading of most recent instruction without interpolation
-    new_heading = hdg
-    # calculate desired velocity by taking most recent time's velocity and interpolating with accel and time
-    new_velocity = vel + accel * (local_time - instruction_time)
+        delta = heading_to_la - heading
+        delta = (delta + 180) % 360 - 180
 
-    drive_cmd = DriveCommand()
-    drive_cmd.heading = 360 - new_heading
-
-    drive_cmd.speed = new_velocity
-    command_pub.publish(drive_cmd)
-
+        # make the motors command
+        motor_msg = Motors()
+        motor_msg.left = 2 + 1 * (delta / 180)
+        motor_msg.right = 2 - 1 * (delta / 180)
+        
+        command_pub.publish(motor_msg)
 
 if __name__ == "__main__":
-    # seconds passed since epoch (global time, used to find local time at every call)
-    start_time = time.time()
     # initialize with first instruction
     instruction_index = 0
 
@@ -84,20 +79,25 @@ if __name__ == "__main__":
 
     # csv is generated with path, based on time passed since start
     # will need to make sure to copy file into this directory after creating it in trajectory_gen
-    # will need to test how this works when the node is run from a launch file
     instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
+    # create the pure pursuit path using the generated trajectory
+    generate_pure_pursuit_path()
+
     # get localization info from David's code
-    local_sub = rospy.Subscriber("/nrc/TEMP", TEMP_TYPE, TEMP_FUNCTION, queue_size=1)
+    local_sub = rospy.Subscriber("/nrc/robot_state", LocalizationVector, receive_position, queue_size=1)
+    # get heading from a DriveStatus
+    status_sub = rospy.Subscriber("/nrc/sensor_data", DriveStatus, receive_heading, queue_size=1)
 
     # Initialize ROS node
     rospy.init_node("nrc_drive_dr")
 
     # Set up a publisher for publishing the drive command
-    command_pub = rospy.Publisher("/nrc/path_cmd", DriveCommand, queue_size=1)
+    #command_pub = rospy.Publisher("/nrc/path_cmd", DriveCommand, queue_size=1)
+    command_pub = rospy.Publisher("/nrc/motors", Motors, queue_size=1)
 
-    # Set up a timer to read the sensor data at 10 Hz
-    update_timer = rospy.Timer(rospy.Duration(secs=0.1), generate_drive_command)
+    # Set up a timer to generate new commands at 10 Hz
+    update_timer = rospy.Timer(rospy.Duration(secs=0.1), generate_motor_command)
 
     # Pump callbacks
     rospy.spin()

@@ -1,0 +1,9 @@
+<launch>
+
+    <param name="port" value="9090" />
+
+    <node pkg="nrc_nav" type="nrc_drive_pp.py" name="nrc_drive_pp" output="screen" />
+
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+</launch>
