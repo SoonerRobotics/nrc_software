@@ -97,7 +97,7 @@
         },
         {
             "id":1,
-            "x":11,
+            "x":9,
             "y":-1,
             "heading":0,
             "type":"turn_start",
@@ -105,7 +105,7 @@
         },
         {
             "id":2,
-            "x":12,
+            "x":10,
             "y":1,
             "heading":90,
             "type":"turn_end",
@@ -113,47 +113,63 @@
         },
         {
             "id":3,
-            "x":12,
-            "y":25,
+            "x":10,
+            "y":24.5,
             "heading":90,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":4,
-            "x":11,
-            "y":26,
+            "x":9,
+            "y":25,
             "heading":180,
             "type":"turn_end",
             "speed": 2
         },
         {
             "id":5,
-            "x":-9.5,
-            "y":26,
+            "x":-9,
+            "y":25,
             "heading":180,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":6,
-            "x":-9,
-            "y":25,
-            "heading":270,
+            "x":-10,
+            "y":22,
+            "heading":315,
+            "type":"turn_end",
+            "speed": 2
+        },
+        {
+            "id":7,
+            "x":-5,
+            "y":11,
+            "heading":315,
+            "type":"turn_start",
+            "speed": 2
+        },
+        {
+            "id":8,
+            "x":-7,
+            "y":6,
+            "heading":225,
             "type":"turn_end",
             "speed": 2
         },
         {
             "id":9,
             "x":-9.5,
-            "y":-1,
-            "heading":270,
+            "y":1.5,
+            "heading":225,
             "type":"turn_start",
             "speed": 2
         },
         {
             "id":10,
-            "x":-8,
+            "x":-9,
             "y":-2,
             "heading":360,
             "type":"turn_end",
