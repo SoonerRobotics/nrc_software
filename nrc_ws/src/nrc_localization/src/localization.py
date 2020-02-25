@@ -13,23 +13,23 @@ from math import cos, radians, sin
 
 speed = 0
 heading = 0
-lastTime = 0
+last_time = 0
 coordinates = [0,-1]
-vectorPub = None
+vector_pub = None
 
 def localization_cb(sensor):
-    global speed, heading, vectorPub, coordinates, lastTime
+    global speed, heading, vector_pub, coordinates, last_time
 
     speed = (sensor.right_speed + sensor.left_speed) / 2
     heading = sensor.yaw
-    elapsedTime = time.time() - lastTime
-    lastTime = time.time()
+    elapsed_time = time.time() - last_time
+    last_time = time.time()
 
     localization_msg = LocalizationVector()
 
     #calculated the delta for distance since last cycle
-    localization_msg.x = speed * cos(radians(heading)) * elapsedTime
-    localization_msg.y = speed * sin(radians(heading)) * elapsedTime * -1
+    localization_msg.x = speed * cos(radians(heading)) * elapsed_time
+    localization_msg.y = speed * sin(radians(heading)) * elapsed_time * -1
 
     coordinates[0] = coordinates[0] + localization_msg.x
     coordinates[1] = coordinates[1] + localization_msg.y
@@ -37,20 +37,20 @@ def localization_cb(sensor):
     localization_msg.x = coordinates[0]
     localization_msg.y = coordinates[1]
 
-    vectorPub.publish(localization_msg)
+    vector_pub.publish(localization_msg)
 
-def mainLoop():
-    global vectorPub, lastTime
+def main_loop():
+    global vector_pub, last_time
 
     rospy.init_node('nrc_localization_node')
-    vectorPub = rospy.Publisher('/nrc/robot_state', LocalizationVector, queue_size=10)
+    vector_pub = rospy.Publisher('/nrc/robot_state', LocalizationVector, queue_size=10)
     sensor_sub = rospy.Subscriber("/nrc/sensor_data", DriveStatus, localization_cb, queue_size=1)
-    lastTime = time.time()
+    last_time = time.time()
     
     rospy.spin()
 
 if __name__ == '__main__':
     try:
-        mainLoop()
+        main_loop()
     except rospy.ROSInterruptException:
         pass
