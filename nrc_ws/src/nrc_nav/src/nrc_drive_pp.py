@@ -7,7 +7,7 @@ from math import atan2, pi
 from numpy import genfromtxt
 
 from pure_pursuit import PurePursuit
-from nrc_msgs.msg import DriveCommand, LocalizationVector, DriveStatus, Motors
+from nrc_msgs.msg import LocalizationVector, DriveStatus, motors
 
 command_pub = None
 # generated trajectory, pulled in once at start
@@ -31,11 +31,16 @@ def receive_position(local_pos):
     global pos
     pos = (local_pos.x, local_pos.y)
 
+    #TODO remove this debug code
+    print("Position: " + str(local_pos.x) + ", " + str(local_pos.y) + "\n")
+
 def receive_heading(status):
     # triggers when sensors (IMU) publish sensor data, including yaw
     global heading
     heading = status.yaw
 
+    #TODO remove this debug code
+    #print("Heading: " + str(heading) + "\n")
 
 def generate_motor_command(timer_event): 
     # this function template was taken from igvc_nav_node.py
@@ -63,7 +68,7 @@ def generate_motor_command(timer_event):
         delta = (delta + 180) % 360 - 180
 
         # make the motors command
-        motor_msg = Motors()
+        motor_msg = motors()
         motor_msg.left = 2 + 1 * (delta / 180)
         motor_msg.right = 2 - 1 * (delta / 180)
         
@@ -94,7 +99,7 @@ if __name__ == "__main__":
 
     # Set up a publisher for publishing the drive command
     #command_pub = rospy.Publisher("/nrc/path_cmd", DriveCommand, queue_size=1)
-    command_pub = rospy.Publisher("/nrc/motors", Motors, queue_size=1)
+    command_pub = rospy.Publisher("/nrc/motors", motors, queue_size=1)
 
     # Set up a timer to generate new commands at 10 Hz
     update_timer = rospy.Timer(rospy.Duration(secs=0.1), generate_motor_command)

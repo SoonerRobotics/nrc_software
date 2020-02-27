@@ -55,7 +55,8 @@ add_message_files(
   FILES
   DriveStatus.msg
   DriveCommand.msg
-  Motors.msg
+  motors.msg # must be lowercase to work with simulator
+  LocalizationVector.msg
 )
 
 ## Generate services in the 'srv' folder
