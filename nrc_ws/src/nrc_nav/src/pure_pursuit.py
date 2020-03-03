@@ -13,9 +13,23 @@ class PurePursuit:
         self.path = pts
 
     def get_lookahead_point(self, x, y, r):
+        # create a counter that will stop searching after counter_max checks after finding a valid lookahead
+        # this should prevent seeing the start and end of the path simultaneously and going backwards
+        counter = 0
+        counter_max = 50
+        counter_started = False
+
         lookahead = None
 
         for i in range(len(self.path)-1):
+            # increment counter if at least one valid lookahead point has been found
+            if counter_started:
+                counter += 1
+            # stop searching for a lookahead if the counter_max has been hit
+            if counter >= counter_max:
+                #break
+                return lookahead
+
             segStart = self.path[i]
             segEnd = self.path[i+1]
 
@@ -44,6 +58,13 @@ class PurePursuit:
             validIntersection2 = min(p1[0], p2[0]) < x2 and x2 < max(p1[0], p2[0]) or min(p1[1], p2[1]) < y2 and y2 < max(p1[1], p2[1])
 
             if validIntersection1 or validIntersection2:
+                # we are within counter_max, so reset the counter if it has been started, or start it if not
+                if counter_started:
+                    counter = 0
+                else:
+                    counter_started = True
+                    counter = 0
+
                 lookahead = None
 
             if validIntersection1:

@@ -7,7 +7,7 @@ import time
 import csv
 from numpy import genfromtxt
 
-from nrc_msgs.msg import DriveCommand, DriveStatus, Motors
+from nrc_msgs.msg import DriveCommand, DriveStatus, motors
 
 # Global variables
 # keep most recent commanded heading and speed
@@ -32,12 +32,12 @@ def send_command(status):
     drive_power = (cmd_speed - (status.left_speed + status.right_speed)/2) * 0.3
 
     # Create Motors command to set left and right motor speed
-    motors = Motors()
-    motors.left = drive_power - turn_power
-    motors.right = drive_power + turn_power
+    motor_cmd = motors()
+    motor_cmd.left = drive_power - turn_power
+    motor_cmd.right = drive_power + turn_power
 
     # publish the motor command
-    command_pub.publish(motors)
+    command_pub.publish(motor_cmd)
 
 if __name__ == "__main__":
     # seconds passed since epoch (global time, used to find local time at every call)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     status_sub = rospy.Subscriber("/nrc/sensor_data", DriveStatus, send_command, queue_size=1)
 
     # Set up a publisher for publishing to the motors
-    command_pub = rospy.Publisher("/nrc/motors", Motors, queue_size=1)
+    command_pub = rospy.Publisher("/nrc/motors", motors, queue_size=1)
 
     # Pump callbacks
     rospy.spin()
