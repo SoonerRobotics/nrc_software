@@ -106,7 +106,11 @@ def generate_motor_command(timer_event):
         integrator += error * time_diff
         slope = (error - last_error) / time_diff
 
-        P = 0.002 * error
+        P = 0.005 * error #was 0.002
+        max_P = 0.25
+        if abs(P) > max_P:
+            # cap P and maintain sign
+            P *= max_P/P
         I = 0.00001 * integrator
         D = 0.0001 * slope
 
