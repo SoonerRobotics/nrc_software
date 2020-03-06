@@ -26,13 +26,11 @@ float drivePower;
 // Algorithms
 /////////////////////////////////
 
-// Heading control
-PIDController yawController;
-float targetAngle = 0.0;
-
-// Speed control
-PIDController speedController;
-float targetSpeed = 0.0;
+// Left and right speed control
+PIDController leftController;
+PIDController rightController;
+float targetLeftSpeed = 0.0;
+float targetRightSpeed = 0.0;
 
 // Velocity Estimators
 TrackingLoop left_tracking(0.5, 5), right_tracking(0.5, 5);
@@ -53,16 +51,16 @@ StaticJsonDocument<128> send_pkt;
 /////////////////////////////////
 // Sensors
 /////////////////////////////////
-#define LEFT_ENC_A 2
-#define LEFT_ENC_B 12
-#define LEFT_TICK_CONST (float)((0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
-#define RIGHT_ENC_A 3
-#define RIGHT_ENC_B 11
-#define RIGHT_TICK_CONST (float)(-(0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define RIGHT_ENC_A 2
+#define RIGHT_ENC_B 12
+#define RIGHT_TICK_CONST (float)((0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define LEFT_ENC_A 3
+#define LEFT_ENC_B 11
+#define LEFT_TICK_CONST (float)(-(0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
-imu::Vector<3> euler, accel, gravi;
+imu::Vector<3> euler, accel;
 sensors_event_t event;
 
 // Encoders
@@ -142,8 +140,9 @@ void setup()
     // Enable the external crystal on the IMU
     bno.setExtCrystalUse(true);
 
-    // Set up the yaw PID controller
-    yawController.begin(0, 0.01, 0, 0);
+    // Set up the left and right PID controllers
+    leftController.begin(0, 0.01, 0, 0);
+    rightController.begin(0, 0.01, 0, 0);
 
     // Set up the motors
     leftMotor.begin(4,5,6);
@@ -173,14 +172,6 @@ void loop()
     bno.getEvent(&event);
     euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
     accel = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-    gravi = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
-
-
-    // Check if flipped upside down and disable motors
-    if (gravi.z() < -8.0) {
-        leftMotor.disableOutput();
-	rightMotor.disableOutput();
-    }
 
 
     // Tracking loops for wheel velocities
@@ -215,20 +206,17 @@ void loop()
     {
         deserializeJson(recv_pkt, Serial);
 
-        targetSpeed = recv_pkt["target_speed"];
-        targetAngle = recv_pkt["target_yaw"];
+        targetLeftSpeed = recv_pkt["target_left_speed"];
+        targetRightSpeed = recv_pkt["target_right_speed"];
     }
 
-    // Achieve the current target heading by locking the IMU to the desired yaw
-    turnPower = yawController.update(0, angleDiff(constrainAngle(euler.x()), targetAngle));
-
-    // Achieve the current target speed by updating drivePower based on current speed
-    drivePower = speedController.update(targetSpeed, currentSpeed);
+    // Achieve the current target left and right motor speeds
+    leftSpeed = leftSpeed + leftSpeedController.update(targetLeftSpeed, left_tracking.getVelocityEstimate());
+    rightSpeed = rightSpeed + rightSpeedController.update(targetRightSpeed, right_tracking.getVelocityEstimate());
 
     // Output to the motors
-    leftMotor.output(drivePower - turnPower);
-    rightMotor.output(drivePower + turnPower);
-
+    leftMotor.output(leftSpeed);
+    rightMotor.output(rightSpeed);
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
