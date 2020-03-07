@@ -27,10 +27,12 @@ float drivePower;
 /////////////////////////////////
 
 // Left and right speed control
-PIDController leftController;
-PIDController rightController;
+PIDController leftSpeedController;
+PIDController rightSpeedController;
 float targetLeftSpeed = 0.0;
 float targetRightSpeed = 0.0;
+float leftSpeed = 0.0;
+float rightSpeed = 0.0;
 
 // Velocity Estimators
 TrackingLoop left_tracking(0.5, 5), right_tracking(0.5, 5);
@@ -141,8 +143,8 @@ void setup()
     bno.setExtCrystalUse(true);
 
     // Set up the left and right PID controllers
-    leftController.begin(0, 0.01, 0, 0);
-    rightController.begin(0, 0.01, 0, 0);
+    leftSpeedController.begin(0, 0.01, 0, 0);
+    rightSpeedController.begin(0, 0.01, 0, 0);
 
     // Set up the motors
     leftMotor.begin(4,5,6);
