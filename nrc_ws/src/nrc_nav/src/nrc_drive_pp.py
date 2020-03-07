@@ -16,7 +16,7 @@ command_pub = None
 instructions = None
 # pure pursuit path
 pp = PurePursuit()
-# current position and heading
+# current position and heading (in degrees)
 pos = None
 heading = None
 # specify whether to show the planned path plot
@@ -67,7 +67,7 @@ def receive_position(local_pos):
 def receive_heading(status):
     # triggers when sensors (IMU) publish sensor data, including yaw
     global heading
-    heading = 360 - status.yaw
+    heading = 360 - degrees(status.yaw)
 
 def generate_motor_command(timer_event): 
     global integrator, last_time, last_error
@@ -108,12 +108,12 @@ def generate_motor_command(timer_event):
         delta = (delta + 180) % 360 - 180
 
         # PID
-        error = delta #/ 180
+        error = delta
         time_diff = max(time.time() - last_time, 0.001)
         integrator += error * time_diff
         slope = (error - last_error) / time_diff
 
-        P = 0.005 * error #was 0.002
+        P = 0.001 * error #was 0.002
         max_P = 0.25
         if abs(P) > max_P:
             # cap P and maintain sign
@@ -129,8 +129,10 @@ def generate_motor_command(timer_event):
 
         # make the motors command
         motor_msg = motors()
-        motor_msg.left = drive_power - turn_power
-        motor_msg.right = drive_power + turn_power
+        # convert to angular velocity (needed for simulator v20)
+        wheel_radius = 0.0635 # in meters, about 2.5 inches
+        motor_msg.left = (drive_power - turn_power) / wheel_radius
+        motor_msg.right = (drive_power + turn_power) / wheel_radius
         
         command_pub.publish(motor_msg)
 

@@ -18,7 +18,7 @@ coordinates = [0,-1]
 vector_pub = None
 
 def localization_cb(sensor):
-    global speed, heading, vector_pub, coordinates, last_time
+    global speed, heading, coordinates, last_time
 
     speed = (sensor.right_speed + sensor.left_speed) / 2
     # convert the angular speed to linear
@@ -26,15 +26,17 @@ def localization_cb(sensor):
     # width of axle is 0.28 meters (doesn't matter for now but who knows)
     linear_speed = speed * wheel_radius
 
-    heading = sensor.yaw
+    heading = sensor.yaw #radians as of simulator v20
     elapsed_time = time.time() - last_time
     last_time = time.time()
 
     localization_msg = LocalizationVector()
 
     #calculated the delta for distance since last cycle
-    localization_msg.x = linear_speed * cos(radians(heading)) * elapsed_time
-    localization_msg.y = linear_speed * sin(radians(heading)) * elapsed_time * -1
+    # localization_msg.x = linear_speed * cos(radians(heading)) * elapsed_time
+    # localization_msg.y = linear_speed * sin(radians(heading)) * elapsed_time * -1
+    localization_msg.x = linear_speed * cos(heading) * elapsed_time
+    localization_msg.y = linear_speed * sin(heading) * elapsed_time * -1
 
     coordinates[0] = coordinates[0] + localization_msg.x
     coordinates[1] = coordinates[1] + localization_msg.y
