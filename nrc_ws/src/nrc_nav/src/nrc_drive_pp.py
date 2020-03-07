@@ -34,19 +34,26 @@ def generate_pure_pursuit_path():
         # add x,y coords from each point in the generated trajectory as waypoints.
         # this is better than just adding the 5 nodes as waypoints.
         pp.add_point(instructions[i][1], instructions[i][2])
-        # interpolate straight sections and fill with more points
-        if i < len(instructions) - 1:
-            x_gap = instructions[i][1] - instructions[i+1][1]
-            y_gap = instructions[i][2] - instructions[i+1][2]
-            density = 20
-            if abs(x_gap) > 2:
-                incr = x_gap / density
-                for n in range(density):
-                    pp.add_point(instructions[i][1] - n*incr, instructions[i][2])
-            elif abs(y_gap) > 2:
-                incr = y_gap / density
-                for n in range(density):
-                    pp.add_point(instructions[i][1], instructions[i][2] - n*incr)
+        #interpolate_path(i)
+
+def interpolate_path(i):
+    # interpolate straight sections and fill with more points
+    # this is useful for debugging and seeing the exact path
+    # However, does not work with the extra ramp waypoint
+    if i < len(instructions) - 1:
+        x_gap = instructions[i][1] - instructions[i+1][1]
+        y_gap = instructions[i][2] - instructions[i+1][2]
+        density = 20
+        # use min_dist to prevent expansion on curves that already have many points
+        min_dist = 2 #meters
+        if abs(x_gap) > min_dist:
+            incr = x_gap / density
+            for n in range(density):
+                pp.add_point(instructions[i][1] - n*incr, instructions[i][2])
+        elif abs(y_gap) > min_dist:
+            incr = y_gap / density
+            for n in range(density):
+                pp.add_point(instructions[i][1], instructions[i][2] - n*incr)
 
 def receive_position(local_pos):
     # triggers when receiving position from David's localization code
