@@ -26,7 +26,7 @@ def localization_cb(sensor):
     # width of axle is 0.28 meters (doesn't matter for now but who knows)
     linear_speed = speed * wheel_radius
 
-    heading = sensor.yaw #radians as of simulator v20
+    heading = -sensor.yaw #radians as of simulator v20
     elapsed_time = time.time() - last_time
     last_time = time.time()
 

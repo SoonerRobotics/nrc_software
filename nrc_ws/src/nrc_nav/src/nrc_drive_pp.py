@@ -67,7 +67,8 @@ def receive_position(local_pos):
 def receive_heading(status):
     # triggers when sensors (IMU) publish sensor data, including yaw
     global heading
-    heading = 360 - degrees(status.yaw)
+    #heading = 360 - degrees(status.yaw)
+    heading = degrees(status.yaw)
 
 def generate_motor_command(timer_event): 
     global integrator, last_time, last_error
@@ -83,10 +84,10 @@ def generate_motor_command(timer_event):
     # declare the look-ahead point
     lookahead = None
     # start with a search radius of 0.4 meters
-    radius = 3 #0.4
+    radius = 0.4
 
     # look until finding the path at the increasing radius or hitting 2 meters
-    while lookahead is None and radius <= 6: 
+    while lookahead is None and radius <= 4: 
         lookahead = pp.get_lookahead_point(cur_pos[0], cur_pos[1], radius)
         radius *= 1.25
     
@@ -101,8 +102,8 @@ def generate_motor_command(timer_event):
             heading_to_la += 360
 
         #TODO print debug code to console
-        #print("Sensed Heading: " + str(heading))
-        #print("Desired Heading: " + str(heading_to_la))
+        print("Sensed Heading: " + str(heading))
+        print("Desired Heading: " + str(heading_to_la) + "\n")
 
         delta = heading_to_la - heading
         delta = (delta + 180) % 360 - 180
@@ -113,15 +114,15 @@ def generate_motor_command(timer_event):
         integrator += error * time_diff
         slope = (error - last_error) / time_diff
 
-        P = 0.001 * error #was 0.002
+        P = 0.0005 * error #was 0.002
         max_P = 0.25
         if abs(P) > max_P:
             # cap P and maintain sign
             P *= max_P/P
-        I = 0.00001 * integrator
-        D = 0.0001 * slope
+        I = 0.00002 * integrator #was 0.00001
+        D = 0.0004 * slope #was 0.0001
 
-        drive_power = 1.5
+        drive_power = 1.7
         turn_power = P + I + D
 
         last_error = error
