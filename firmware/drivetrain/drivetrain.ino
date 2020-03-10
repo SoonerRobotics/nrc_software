@@ -76,7 +76,7 @@ QuadratureEncoder leftEncoder, rightEncoder;
 /////////////////////////////////
 // Timing
 /////////////////////////////////
-#define LOOP_RATE   60
+#define LOOP_RATE  100
 #define LOOP_PERIOD (float)(1.0f / (float)LOOP_RATE)
 #define MILLIS_PER_SECOND 1000
 
@@ -147,8 +147,8 @@ void setup()
     bno.setExtCrystalUse(true);
 
     // Set up the left and right PID controllers
-    leftSpeedController.begin(0, 0.015, 0, 0.01);
-    rightSpeedController.begin(0, 0.015, 0, 0.01);
+    leftSpeedController.begin(0, 0.09, 0, 0.005);
+    rightSpeedController.begin(0, 0.09, 0, 0.005);
 
     // Set up the motors
     leftMotor.begin(4,5,6);
