@@ -14,10 +14,10 @@ status_pub = None
 def on_joy(joy_cmd):
     msg = motors()
     left = joy_cmd.axes[1]
-    right = joy_cmd.axes[4]
+    right = joy_cmd.axes[3]
 
-    msg.left = right * 2
-    msg.right = left * 2
+    msg.left = left + right / 3
+    msg.right = left - right / 3
 
     # Convert the packet to a string
     drive_cmd.publish(msg)
