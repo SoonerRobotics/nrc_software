@@ -35,7 +35,7 @@ float leftSpeed = 0.0;
 float rightSpeed = 0.0;
 
 // Velocity Estimators
-TrackingLoop left_tracking(0.5, 5), right_tracking(0.5, 5);
+TrackingLoop left_tracking(0.5, 0), right_tracking(0.5, 0);
 float currentSpeed;
 
 
@@ -53,12 +53,12 @@ StaticJsonDocument<128> send_pkt;
 /////////////////////////////////
 // Sensors
 /////////////////////////////////
-#define RIGHT_ENC_A 2
-#define RIGHT_ENC_B 12
-#define RIGHT_TICK_CONST (float)((0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
-#define LEFT_ENC_A 3
-#define LEFT_ENC_B 11
-#define LEFT_TICK_CONST (float)(-(0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define LEFT_ENC_A 2
+#define LEFT_ENC_B 12
+#define LEFT_TICK_CONST (float)((0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define RIGHT_ENC_A 3
+#define RIGHT_ENC_B 11
+#define RIGHT_TICK_CONST (float)(-(0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
@@ -127,7 +127,7 @@ void right_encoder_isr()
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     /* Initialise the sensor */
     if(!bno.begin())
@@ -143,8 +143,8 @@ void setup()
     bno.setExtCrystalUse(true);
 
     // Set up the left and right PID controllers
-    leftSpeedController.begin(0, 0.01, 0, 0);
-    rightSpeedController.begin(0, 0.01, 0, 0);
+    leftSpeedController.begin(0, 0.02, 0, 0.01);
+    rightSpeedController.begin(0, 0.02, 0, 0.01);
 
     // Set up the motors
     leftMotor.begin(4,5,6);
@@ -194,6 +194,7 @@ void loop()
     send_pkt["right_error"] = right_tracking.getPositionEstimate() - rightEncoder.getValue();
     send_pkt["acceleration"] = accel.x();
     send_pkt["speed"] = currentSpeed;
+    send_pkt["target_speed_l"] = targetLeftSpeed; //added by Noah to test
 
     // Send data over serial
     serializeJson(send_pkt, Serial);
@@ -213,8 +214,11 @@ void loop()
     }
 
     // Achieve the current target left and right motor speeds
-    leftSpeed = leftSpeed + leftSpeedController.update(targetLeftSpeed, left_tracking.getVelocityEstimate());
-    rightSpeed = rightSpeed + rightSpeedController.update(targetRightSpeed, right_tracking.getVelocityEstimate());
+    leftSpeed = leftSpeed - leftSpeedController.update(targetLeftSpeed, left_tracking.getVelocityEstimate());
+    rightSpeed = rightSpeed - rightSpeedController.update(targetRightSpeed, right_tracking.getVelocityEstimate());
+
+    leftSpeed = RLUtil::clamp(leftSpeed, -1, 1);
+    rightSpeed = RLUtil::clamp(rightSpeed, -1, 1);
 
     // Output to the motors
     leftMotor.output(leftSpeed);
