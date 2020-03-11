@@ -1,0 +1,10 @@
+<launch>
+
+    <node pkg="joy" type="joy_node" name="joy_node">
+        <param name="autorepeat_rate" value="30" />
+        <param name="deadzone" value="0.12" />
+    </node>
+
+    <node pkg="nrc_serial" type="nrc_manual.py" name="nrc_manual" output="screen" />
+
+</launch>
