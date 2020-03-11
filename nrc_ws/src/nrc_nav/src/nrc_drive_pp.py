@@ -16,6 +16,10 @@ command_pub = None
 instructions = None
 # pure pursuit path
 pp = PurePursuit()
+pp.add_point(0, -1)
+pp.add_point(2, -1)
+pp.add_point(2, 1)
+pp.add_point(0, 1)
 # current position and heading
 pos = None
 heading = None
@@ -60,7 +64,7 @@ def receive_position(local_pos):
 def receive_heading(status):
     # triggers when sensors (IMU) publish sensor data, including yaw
     global heading
-    heading = 360 - status.yaw
+    heading = status.yaw
 
 def generate_motor_command(timer_event): 
     global integrator, last_time, last_error
@@ -76,7 +80,7 @@ def generate_motor_command(timer_event):
     # declare the look-ahead point
     lookahead = None
     # start with a search radius of 0.4 meters
-    radius = 3 #0.4
+    radius = 0.3 #0.4
 
     # look until finding the path at the increasing radius or hitting 2 meters
     while lookahead is None and radius <= 6: 
@@ -89,16 +93,18 @@ def generate_motor_command(timer_event):
 
     # make sure we actually found the path
     if lookahead is not None:
-        heading_to_la = degrees(atan2(lookahead[1] - cur_pos[1], lookahead[0] - cur_pos[0]))
+        heading_to_la = -degrees(atan2(lookahead[1] - cur_pos[1], lookahead[0] - cur_pos[0]))
         if heading_to_la <= 0:
             heading_to_la += 360
 
         #TODO print debug code to console
-        #print("Sensed Heading: " + str(heading))
-        #print("Desired Heading: " + str(heading_to_la))
+        print("Sensed Heading: " + str(heading))
+        print("Desired Heading: " + str(heading_to_la))
 
         delta = heading_to_la - heading
         delta = (delta + 180) % 360 - 180
+
+        # print("Delta: ", delta)
 
         # PID
         error = delta #/ 180
@@ -111,7 +117,7 @@ def generate_motor_command(timer_event):
         if abs(P) > max_P:
             # cap P and maintain sign
             P *= max_P/P
-        I = 0.00001 * integrator
+        I = 0 * integrator
         D = 0.0001 * slope
 
         drive_power = 1.5
@@ -122,10 +128,10 @@ def generate_motor_command(timer_event):
 
         # make the motors command
         motor_msg = motors()
-        motor_msg.left = drive_power - turn_power
-        motor_msg.right = drive_power + turn_power
+        motor_msg.left = drive_power + turn_power
+        motor_msg.right = drive_power - turn_power
         
-        command_pub.publish(motor_msg)
+        #command_pub.publish(motor_msg)
 
 if __name__ == "__main__":
     # initialize with first instruction
@@ -140,7 +146,7 @@ if __name__ == "__main__":
     instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
     # create the pure pursuit path using the generated trajectory
-    generate_pure_pursuit_path()
+    # generate_pure_pursuit_path()
 
     # get localization info from David's code
     local_sub = rospy.Subscriber("/nrc/robot_state", LocalizationVector, receive_position, queue_size=1)
@@ -148,7 +154,7 @@ if __name__ == "__main__":
     status_sub = rospy.Subscriber("/nrc/sensor_data", DriveStatus, receive_heading, queue_size=1)
 
     # Initialize ROS node
-    rospy.init_node("nrc_drive_dr")
+    rospy.init_node("nrc_drive_dr_lol")
 
     # Set up a publisher for publishing the drive command
     command_pub = rospy.Publisher("/nrc/motors", motors, queue_size=1)

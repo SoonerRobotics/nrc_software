@@ -2,9 +2,8 @@
 
     <param name="port" value="9090" />
 
-    <node pkg="nrc_nav" type="nrc_drive_pp.py" name="nrc_drive_pp" output="screen" />
-
-    <node pkg="nrc_localization" type="nrc_localization.py" name="nrc_localization" output="screen" />
+    <remap from="/nrc/motors" to="/yeet/motors"/>
+    <node pkg="nrc_nav" type="nrc_drive_pp.py" name="nrc_drive_pp_yeet" output="screen" />
 
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
 
