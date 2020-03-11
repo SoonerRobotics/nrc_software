@@ -24,7 +24,7 @@ def localization_cb(sensor):
     # convert the angular speed to linear
     wheel_radius = 0.0635 # in meters, just a guess of 2.5 inches
     # width of axle is 0.28 meters (doesn't matter for now but who knows)
-    linear_speed = speed * wheel_radius
+    linear_speed = speed * 0.5 # HACK: not sure why we have to multiply by a random constant
 
     heading = sensor.yaw
     elapsed_time = time.time() - last_time
