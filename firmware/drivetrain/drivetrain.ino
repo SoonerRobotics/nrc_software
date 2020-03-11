@@ -56,12 +56,12 @@ StaticJsonDocument<128> send_pkt;
 /////////////////////////////////
 // Sensors
 /////////////////////////////////
-#define LEFT_ENC_A 2
-#define LEFT_ENC_B 12
-#define LEFT_TICK_CONST (float)((0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
-#define RIGHT_ENC_A 3
-#define RIGHT_ENC_B 11
-#define RIGHT_TICK_CONST (float)(-(0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define LEFT_ENC_A 3
+#define LEFT_ENC_B 11
+#define LEFT_TICK_CONST (float)(-(0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define RIGHT_ENC_A 2
+#define RIGHT_ENC_B 12
+#define RIGHT_TICK_CONST (float)((0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
@@ -76,7 +76,7 @@ QuadratureEncoder leftEncoder, rightEncoder;
 /////////////////////////////////
 // Timing
 /////////////////////////////////
-#define LOOP_RATE  100
+#define LOOP_RATE  20
 #define LOOP_PERIOD (float)(1.0f / (float)LOOP_RATE)
 #define MILLIS_PER_SECOND 1000
 
@@ -131,7 +131,7 @@ void right_encoder_isr()
 void setup()
 {
     Serial.begin(115200);
-    Serial.setTimeout(10);
+    Serial.setTimeout(5);
 
     /* Initialise the sensor */
     if(!bno.begin())
@@ -147,16 +147,16 @@ void setup()
     bno.setExtCrystalUse(true);
 
     // Set up the left and right PID controllers
-    leftSpeedController.begin(0, 0.09, 0, 0.005);
-    rightSpeedController.begin(0, 0.09, 0, 0.005);
+    leftSpeedController.begin(0, 0.05, 0, 0.005);
+    rightSpeedController.begin(0, 0.05, 0, 0.005);
 
     // Set up the motors
-    leftMotor.begin(4,5,6);
-    rightMotor.begin(8,7,9);
+    leftMotor.begin(8,7,9);
+    rightMotor.begin(4,5,6);
 
     // Set up the encoders
-    leftEncoder.begin(LEFT_ENC_A, LEFT_ENC_B, LEFT_TICK_CONST);
-    rightEncoder.begin(RIGHT_ENC_A, RIGHT_ENC_B, RIGHT_TICK_CONST);
+    leftEncoder.begin(LEFT_ENC_A, LEFT_ENC_B, LEFT_TICK_CONST * 2);
+    rightEncoder.begin(RIGHT_ENC_A, RIGHT_ENC_B, RIGHT_TICK_CONST * 2);
 
     // Attach encoder interrupts
     attachInterrupt(digitalPinToInterrupt(LEFT_ENC_A), &left_encoder_isr, CHANGE);
@@ -235,14 +235,13 @@ void loop()
     // Output to the motors
     // We only output when there is enough command to actually make the wheels turn
     // Further, we rescale the output to always be >0.05 and <1.0
-    leftMotor.output(abs(leftCmdSpeed) > 0.1 ? leftCmdSpeed / abs(leftCmdSpeed) * 0.05 + leftCmdSpeed * 0.95 : 0);
-    rightMotor.output(abs(rightCmdSpeed) > 0.1 ? rightCmdSpeed / abs(rightCmdSpeed) * 0.05 + rightCmdSpeed * 0.95 : 0);
+    leftMotor.output(leftCmdSpeed);
+    rightMotor.output(rightCmdSpeed);
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-
     // Wait for loop update time to elapse
-    while((millis() - last_loop_time) * MILLIS_PER_SECOND < LOOP_PERIOD){}
+    while((millis() - last_loop_time) < LOOP_PERIOD * MILLIS_PER_SECOND){}
 
     // Update timing tracker
     last_loop_time = millis();
