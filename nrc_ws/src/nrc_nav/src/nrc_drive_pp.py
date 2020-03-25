@@ -16,11 +16,16 @@ command_pub = None
 instructions = None
 # pure pursuit path
 pp = PurePursuit()
+#TODO hard coded points for temp course in hall outside lab
+pp.add_point(0, -1)
+pp.add_point(2, -1)
+pp.add_point(2, 1)
+pp.add_point(0, 1)
 # current position and heading
 pos = None
 heading = None
 # specify whether to show the planned path plot
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 # PID variables
 integrator = 0
@@ -60,7 +65,7 @@ def receive_position(local_pos):
 def receive_heading(status):
     # triggers when sensors (IMU) publish sensor data, including yaw
     global heading
-    heading = 360 - status.yaw
+    heading = status.yaw
 
 def generate_motor_command(timer_event): 
     global integrator, last_time, last_error
@@ -76,7 +81,7 @@ def generate_motor_command(timer_event):
     # declare the look-ahead point
     lookahead = None
     # start with a search radius of 0.4 meters
-    radius = 3 #0.4
+    radius = 0.4 #0.4
 
     # look until finding the path at the increasing radius or hitting 2 meters
     while lookahead is None and radius <= 6: 
@@ -89,7 +94,7 @@ def generate_motor_command(timer_event):
 
     # make sure we actually found the path
     if lookahead is not None:
-        heading_to_la = degrees(atan2(lookahead[1] - cur_pos[1], lookahead[0] - cur_pos[0]))
+        heading_to_la = -degrees(atan2(lookahead[1] - cur_pos[1], lookahead[0] - cur_pos[0]))
         if heading_to_la <= 0:
             heading_to_la += 360
 
@@ -106,16 +111,12 @@ def generate_motor_command(timer_event):
         integrator += error * time_diff
         slope = (error - last_error) / time_diff
 
-        P = 0.005 * error #was 0.002
-        max_P = 0.25
-        if abs(P) > max_P:
-            # cap P and maintain sign
-            P *= max_P/P
-        I = 0.00001 * integrator
+        P = 0.006 * error #was 0.002
+        I = 0 * integrator
         D = 0.0001 * slope
 
-        drive_power = 1.5
-        turn_power = P + I + D
+        drive_power = 0.5 * (1 - abs(delta / 180))**5
+        turn_power = P
 
         last_error = error
         last_time = time.time()
@@ -140,7 +141,8 @@ if __name__ == "__main__":
     instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
     # create the pure pursuit path using the generated trajectory
-    generate_pure_pursuit_path()
+    #TODO edit trajectory JSON file and uncomment this
+    #generate_pure_pursuit_path()
 
     # get localization info from David's code
     local_sub = rospy.Subscriber("/nrc/robot_state", LocalizationVector, receive_position, queue_size=1)

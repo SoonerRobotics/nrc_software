@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg="nrc_nav" type="nrc_drive_pp.py" name="nrc_drive_pp" output="screen" />
+
+    <node pkg="nrc_localization" type="nrc_localization.py" name="nrc_localization" output="screen" />
+
+    <node pkg="nrc_serial" type="nrc_serial_node.py" name="nrc_serial_node" output="screen" />
+
+</launch>

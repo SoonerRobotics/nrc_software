@@ -5,7 +5,7 @@ import rospy
 import serial
 
 
-from nrc_msgs.msg import DriveStatus, DriveCommand
+from nrc_msgs.msg import DriveStatus, motors
 
 # Global robot objects
 robot_serial = None
@@ -41,14 +41,14 @@ def get_drivetrain_status(timer_event):
 
 
 
-def send_drivetrain_command(drive_cmd):
+def send_drivetrain_command(motor_cmd):
     global robot_serial
 
     # Form the command packet
-    command = {"heading": drive_cmd.heading, "speed": drive_cmd.speed}
+    command = {"target_left_speed": motor_cmd.left, "target_right_speed": motor_cmd.right}
 
     # Convert the packet to a string
-    command_json = json.dumps(command)
+    command_json = json.dumps(command, separators = (',', ':')) + "\n"
 
     # Write the command to serial
     robot_serial.write(command_json)
@@ -61,13 +61,13 @@ if __name__ == "__main__":
     rospy.init_node("nrc_serial_node")
 
     # Set up the serial communication to the robot
-    robot_serial = serial.Serial(port="/dev/ttyUSB0", baudrate=9600)
+    robot_serial = serial.Serial(port="/dev/ttyUSB0", baudrate=115200)
 
     # Set up a publisher for publishing the status
     status_pub = rospy.Publisher("/nrc/sensor_data", DriveStatus, queue_size=1)
 
     # Set up a subscriber for getting commands
-    command_sub = rospy.Subscriber("/nrc/cmd", DriveCommand, send_drivetrain_command, queue_size=1)
+    command_sub = rospy.Subscriber("/nrc/motors", motors, send_drivetrain_command, queue_size=1)
 
     # Set up a timer to read the sensor data at 200 Hz
     sensor_timer = rospy.Timer(rospy.Duration(secs=0.005), get_drivetrain_status)
