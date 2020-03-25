@@ -16,6 +16,7 @@ command_pub = None
 instructions = None
 # pure pursuit path
 pp = PurePursuit()
+#TODO hard coded points for temp course in hall outside lab
 pp.add_point(0, -1)
 pp.add_point(2, -1)
 pp.add_point(2, 1)
@@ -140,7 +141,8 @@ if __name__ == "__main__":
     instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
     # create the pure pursuit path using the generated trajectory
-    # generate_pure_pursuit_path()
+    #TODO edit trajectory JSON file and uncomment this
+    #generate_pure_pursuit_path()
 
     # get localization info from David's code
     local_sub = rospy.Subscriber("/nrc/robot_state", LocalizationVector, receive_position, queue_size=1)
