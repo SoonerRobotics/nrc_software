@@ -1,0 +1,13 @@
+[Unit]
+Description=NRC Startup
+RequiresMountsFor=/home/nrc/
+
+[Service]
+User=nrc
+ExecStart=/home/nrc/nrc_software/setup/systemd/nrc_start.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nrc_logs
+
+[Install]
+WantedBy=multi-user.target

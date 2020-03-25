@@ -20,11 +20,11 @@ vector_pub = None
 def localization_cb(sensor):
     global speed, heading, vector_pub, coordinates, last_time
 
-    speed = (sensor.right_speed + sensor.left_speed) / 2
+    linear_speed = (sensor.right_speed + sensor.left_speed) / 2
     # convert the angular speed to linear
     wheel_radius = 0.0635 # in meters, about 2.5 inches
     # width of axle is 0.28 meters (doesn't matter for now but who knows)
-    linear_speed = speed * wheel_radius
+
 
     heading = sensor.yaw
     elapsed_time = time.time() - last_time

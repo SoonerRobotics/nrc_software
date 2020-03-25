@@ -48,7 +48,7 @@ def send_drivetrain_command(motor_cmd):
     command = {"target_left_speed": motor_cmd.left, "target_right_speed": motor_cmd.right}
 
     # Convert the packet to a string
-    command_json = json.dumps(command)
+    command_json = json.dumps(command, separators = (',', ':')) + "\n"
 
     # Write the command to serial
     robot_serial.write(command_json)
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     rospy.init_node("nrc_serial_node")
 
     # Set up the serial communication to the robot
-    robot_serial = serial.Serial(port="/dev/ttyUSB0", baudrate=9600)
+    robot_serial = serial.Serial(port="/dev/ttyUSB0", baudrate=115200)
 
     # Set up a publisher for publishing the status
     status_pub = rospy.Publisher("/nrc/sensor_data", DriveStatus, queue_size=1)
