@@ -8,7 +8,6 @@
 
 #define DEVICE_ID 1
 
-
 /////////////////////////////////
 // Actuators
 /////////////////////////////////
@@ -27,14 +26,20 @@ float drivePower;
 /////////////////////////////////
 
 // Left and right speed control
-PIDController leftController;
-PIDController rightController;
+PIDController leftSpeedController;
+PIDController rightSpeedController;
 float targetLeftSpeed = 0.0;
 float targetRightSpeed = 0.0;
+float leftCmdSpeed = 0.0;
+float rightCmdSpeed = 0.0;
 
 // Velocity Estimators
-TrackingLoop left_tracking(0.5, 5), right_tracking(0.5, 5);
+float leftSpeedEstimate = 0.0;
+float rightSpeedEstimate = 0.0;
 float currentSpeed;
+
+// Low Pass IIR decay rate (smooths out velocity estimate)
+#define LPIIR_DECAY 0.1f
 
 
 
@@ -51,12 +56,12 @@ StaticJsonDocument<128> send_pkt;
 /////////////////////////////////
 // Sensors
 /////////////////////////////////
-#define RIGHT_ENC_A 2
-#define RIGHT_ENC_B 12
-#define RIGHT_TICK_CONST (float)((0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
 #define LEFT_ENC_A 3
 #define LEFT_ENC_B 11
-#define LEFT_TICK_CONST (float)(-(0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define LEFT_TICK_CONST (float)(-(0.3 / 178.0))  // Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
+#define RIGHT_ENC_A 2
+#define RIGHT_ENC_B 12
+#define RIGHT_TICK_CONST (float)((0.3 / 178.0))// Rolled robot 30cm (0.3m) and got 178 ticks average, so this is meters per tick
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
@@ -71,7 +76,7 @@ QuadratureEncoder leftEncoder, rightEncoder;
 /////////////////////////////////
 // Timing
 /////////////////////////////////
-#define LOOP_RATE   200
+#define LOOP_RATE  20
 #define LOOP_PERIOD (float)(1.0f / (float)LOOP_RATE)
 #define MILLIS_PER_SECOND 1000
 
@@ -125,7 +130,8 @@ void right_encoder_isr()
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
+    Serial.setTimeout(5);
 
     /* Initialise the sensor */
     if(!bno.begin())
@@ -141,16 +147,16 @@ void setup()
     bno.setExtCrystalUse(true);
 
     // Set up the left and right PID controllers
-    leftController.begin(0, 0.01, 0, 0);
-    rightController.begin(0, 0.01, 0, 0);
+    leftSpeedController.begin(0, 0.05, 0, 0.005);
+    rightSpeedController.begin(0, 0.05, 0, 0.005);
 
     // Set up the motors
-    leftMotor.begin(4,5,6);
-    rightMotor.begin(8,7,9);
+    leftMotor.begin(8,7,9);
+    rightMotor.begin(4,5,6);
 
     // Set up the encoders
-    leftEncoder.begin(LEFT_ENC_A, LEFT_ENC_B, LEFT_TICK_CONST);
-    rightEncoder.begin(RIGHT_ENC_A, RIGHT_ENC_B, RIGHT_TICK_CONST);
+    leftEncoder.begin(LEFT_ENC_A, LEFT_ENC_B, LEFT_TICK_CONST * 2);
+    rightEncoder.begin(RIGHT_ENC_A, RIGHT_ENC_B, RIGHT_TICK_CONST * 2);
 
     // Attach encoder interrupts
     attachInterrupt(digitalPinToInterrupt(LEFT_ENC_A), &left_encoder_isr, CHANGE);
@@ -158,10 +164,6 @@ void setup()
 
     // Initialize loop timer
     last_loop_time = millis();
-
-    // Fully initialize tracking loops
-    left_tracking.reset();
-    right_tracking.reset();
 }
 
 
@@ -174,22 +176,25 @@ void loop()
     accel = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
 
-    // Tracking loops for wheel velocities
-    left_tracking.update(leftEncoder.getValue());
-    right_tracking.update(rightEncoder.getValue());
+    // Get instantaneous speed for each wheel
+    float instLeftSpeed = leftEncoder.getValue() / LOOP_PERIOD;
+    leftEncoder.reset();
+    float instRightSpeed = rightEncoder.getValue() / LOOP_PERIOD;
+    rightEncoder.reset();
 
+    // Get estimate using low pass IIR
+    leftSpeedEstimate += (1.0f - LPIIR_DECAY) * (instLeftSpeed - leftSpeedEstimate);
+    rightSpeedEstimate += (1.0f - LPIIR_DECAY) * (instRightSpeed - rightSpeedEstimate);
 
     // Calculate current speed
-    currentSpeed = 0.5 * (left_tracking.getVelocityEstimate() + right_tracking.getVelocityEstimate());
+    currentSpeed = 0.5 * (leftSpeedEstimate + rightSpeedEstimate);
 
 
     // Sensor data update
     send_pkt["id"] = DEVICE_ID;
     send_pkt["yaw"] = euler.x();
-    send_pkt["left_vel"] = left_tracking.getVelocityEstimate();
-    send_pkt["right_vel"] = right_tracking.getVelocityEstimate();
-    send_pkt["left_error"] = left_tracking.getPositionEstimate() - leftEncoder.getValue();
-    send_pkt["right_error"] = right_tracking.getPositionEstimate() - rightEncoder.getValue();
+    send_pkt["left_vel"] = leftSpeedEstimate;
+    send_pkt["right_vel"] = rightSpeedEstimate;
     send_pkt["acceleration"] = accel.x();
     send_pkt["speed"] = currentSpeed;
 
@@ -204,25 +209,39 @@ void loop()
     // Get commands from serial
     if(Serial.available())
     {
-        deserializeJson(recv_pkt, Serial);
+        // deserializeJson(recv_pkt, Serial);
 
-        targetLeftSpeed = recv_pkt["target_left_speed"];
-        targetRightSpeed = recv_pkt["target_right_speed"];
+        // Wait for entire packet. Timeout set in setup() to only wait 10ms at worst
+        String rawSerial = Serial.readStringUntil('\n');
+        deserializeJson(recv_pkt, rawSerial);
+
+        if (recv_pkt.containsKey("target_left_speed")) {
+          targetLeftSpeed = recv_pkt["target_left_speed"];
+        }
+
+        if (recv_pkt.containsKey("target_right_speed")) {
+          targetRightSpeed = recv_pkt["target_right_speed"];
+        }
     }
 
     // Achieve the current target left and right motor speeds
-    leftSpeed = leftSpeed + leftSpeedController.update(targetLeftSpeed, left_tracking.getVelocityEstimate());
-    rightSpeed = rightSpeed + rightSpeedController.update(targetRightSpeed, right_tracking.getVelocityEstimate());
+    leftCmdSpeed -= leftSpeedController.update(targetLeftSpeed, leftSpeedEstimate);
+    rightCmdSpeed -= rightSpeedController.update(targetRightSpeed, rightSpeedEstimate);
+
+    // Clamp speed to prevent it from diverging crazily (particularly when stalled)
+    leftCmdSpeed = RLUtil::clamp(leftCmdSpeed, -1, 1);
+    rightCmdSpeed = RLUtil::clamp(rightCmdSpeed, -1, 1);
 
     // Output to the motors
-    leftMotor.output(leftSpeed);
-    rightMotor.output(rightSpeed);
+    // We only output when there is enough command to actually make the wheels turn
+    // Further, we rescale the output to always be >0.05 and <1.0
+    leftMotor.output(leftCmdSpeed);
+    rightMotor.output(rightCmdSpeed);
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-
     // Wait for loop update time to elapse
-    while((millis() - last_loop_time) * MILLIS_PER_SECOND < LOOP_PERIOD){}
+    while((millis() - last_loop_time) < LOOP_PERIOD * MILLIS_PER_SECOND){}
 
     // Update timing tracker
     last_loop_time = millis();
