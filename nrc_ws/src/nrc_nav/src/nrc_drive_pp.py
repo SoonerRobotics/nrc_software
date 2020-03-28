@@ -4,7 +4,7 @@ import rospy, rospkg
 
 import csv
 import time
-from math import atan2, degrees
+from math import atan2, degrees, sqrt
 from numpy import genfromtxt
 
 from pure_pursuit import PurePursuit
@@ -34,26 +34,23 @@ def generate_pure_pursuit_path():
         # add x,y coords from each point in the generated trajectory as waypoints.
         # this is better than just adding the 5 nodes as waypoints.
         pp.add_point(instructions[i][1], instructions[i][2])
-        #interpolate_path(i)
+        #interpolate_path(i) #TODO comment out when not debugging
 
 def interpolate_path(i):
     # interpolate straight sections and fill with more points
     # this is useful for debugging and seeing the exact path
-    # However, does not work with the extra ramp waypoint
     if i < len(instructions) - 1:
-        x_gap = instructions[i][1] - instructions[i+1][1]
-        y_gap = instructions[i][2] - instructions[i+1][2]
+        x_gap = instructions[i+1][1] - instructions[i][1]
+        y_gap = instructions[i+1][2] - instructions[i][2]
+        dist = sqrt(x_gap*x_gap + y_gap*y_gap)
         density = 20
-        # use min_dist to prevent expansion on curves that already have many points
+        # use min_dist to prevent expansion on curves that already have many points close together
         min_dist = 2 #meters
-        if abs(x_gap) > min_dist:
-            incr = x_gap / density
+        if dist > min_dist:
+            x_incr = x_gap/density
+            y_incr = y_gap/density
             for n in range(density):
-                pp.add_point(instructions[i][1] - n*incr, instructions[i][2])
-        elif abs(y_gap) > min_dist:
-            incr = y_gap / density
-            for n in range(density):
-                pp.add_point(instructions[i][1], instructions[i][2] - n*incr)
+                pp.add_point(instructions[i][1] + n*x_incr, instructions[i][2] + n*y_incr)
 
 def receive_position(local_pos):
     # triggers when receiving position from David's localization code
