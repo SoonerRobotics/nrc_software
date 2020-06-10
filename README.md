@@ -10,6 +10,7 @@ This code is verified to work in the SCR Simulator v.18 with ROS Melodic in Ubun
  - If using WSL, [install VcXsrv](https://sourceforge.net/projects/vcxsrv/) and run it as specified [here](https://janbernloehr.de/2017/06/10/ros-windows#install-vcxsrv).
  - Download [Version 18 of the SCR Simulator](https://github.com/SoonerRobotics/scr_simulator/releases/tag/v18), unzip it, and run the scr_simulator.exe file.
  - From within the repo, run `roslaunch nrc_nav drive_pp_sim.launch`.
+ - After the console shows rosbridge has connected to port 9090, click "Run" in the simulator to connect the client, and wait a few seconds for VcXsrv to connect and for the code to start up. If it does not connect the client, press Escape and click "Restart" in the simulator to attempt a reconnect.
 
 ## How the robot's path is created:
 
