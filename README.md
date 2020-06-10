@@ -21,7 +21,7 @@ The course is specified by the file `config.json` in the trajectory_gen folder. 
  - Open the config.json file to edit its contents. This can be done by running `nano config.json`, `code config.json`, or whatever editor you prefer. 
  - Modify, add, or remove _waypoints_ to change the path the robot will follow. To ensure an accurate depiction of your setup, you may wish to alter the _course_ points as well so they will be displayed appropriately.
  - Exit the editor and save your changes. 
- - Now that we have a new path, we need to create a new trajectory. Execute `python main.py` to generate a new trajectory. This will replace the file `output_traj.csv` with the new trajectory.
+ - Now that we have a new course, we need to create a new trajectory. Execute `python main.py` to generate a new trajectory. This will replace the file `output_traj.csv` with the new trajectory.
  - The last step is to make the code use this new trajectory rather than the old one. Run `cp output_traj.csv ../nrc_ws/src/nrc_nav/src` to replace the old trajectory with this new one.
  - The next time the code is run, it will generate a path using this new trajectory, and the VcXsrv display should reflect this.
  
