@@ -4,7 +4,7 @@ import rospy, rospkg
 
 import csv
 import time
-from math import atan2, degrees
+from math import atan2, degrees, sqrt
 from numpy import genfromtxt
 
 from pure_pursuit import PurePursuit
@@ -16,21 +16,26 @@ command_pub = None
 instructions = None
 # pure pursuit path
 pp = PurePursuit()
-#TODO hard coded points for temp course in hall outside lab
-pp.add_point(0, -1)
-pp.add_point(2, -1)
-pp.add_point(2, 1)
-pp.add_point(0, 1)
 # current position and heading
 pos = None
 heading = None
 # specify whether to show the planned path plot
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 
 # PID variables
 integrator = 0
 last_error = 0.0
 last_time = time.time()
+
+def generate_hard_path():
+    global pp
+    pp = PurePursuit()
+    # this creates a path manually set by changing waypoints here.
+    # used for testing the robot on a small course by the lab.
+    pp.add_point(0, -1)
+    pp.add_point(2, -1)
+    pp.add_point(2, 1)
+    pp.add_point(0, 1)
 
 def generate_pure_pursuit_path():
     global pp
@@ -39,19 +44,23 @@ def generate_pure_pursuit_path():
         # add x,y coords from each point in the generated trajectory as waypoints.
         # this is better than just adding the 5 nodes as waypoints.
         pp.add_point(instructions[i][1], instructions[i][2])
-        # interpolate straight sections and fill with more points
-        if i < len(instructions) - 1:
-            x_gap = instructions[i][1] - instructions[i+1][1]
-            y_gap = instructions[i][2] - instructions[i+1][2]
-            density = 20
-            if abs(x_gap) > 2:
-                incr = x_gap / density
-                for n in range(density):
-                    pp.add_point(instructions[i][1] - n*incr, instructions[i][2])
-            elif abs(y_gap) > 2:
-                incr = y_gap / density
-                for n in range(density):
-                    pp.add_point(instructions[i][1], instructions[i][2] - n*incr)
+        interpolate_path(i) #TODO comment out when not debugging.
+
+def interpolate_path(i):
+    # interpolate straight sections and fill with more points
+    # this is useful for debugging and seeing the exact path
+    if i < len(instructions) - 1:
+        x_gap = instructions[i+1][1] - instructions[i][1]
+        y_gap = instructions[i+1][2] - instructions[i][2]
+        dist = sqrt(x_gap*x_gap + y_gap*y_gap)
+        density = 20
+        # use min_dist to prevent expansion on curves that already have many points close together
+        min_dist = 2 #meters
+        if dist > min_dist:
+            x_incr = x_gap/density
+            y_incr = y_gap/density
+            for n in range(density):
+                pp.add_point(instructions[i][1] + n*x_incr, instructions[i][2] + n*y_incr)
 
 def receive_position(local_pos):
     # triggers when receiving position from David's localization code
@@ -140,9 +149,10 @@ if __name__ == "__main__":
     # will need to make sure to copy file into this directory after creating it in trajectory_gen
     instructions = genfromtxt(filepath + 'output_traj.csv', delimiter=',', skip_header=1, names="time,x,y,velocity,accel,heading")
 
-    # create the pure pursuit path using the generated trajectory
-    #TODO edit trajectory JSON file and uncomment this
-    #generate_pure_pursuit_path()
+    # create the pure pursuit path using the generated trajectory (sim or real course)
+    generate_pure_pursuit_path()
+    # OR create a hard coded path (small test course by lab)
+    #generate_hard_path()
 
     # get localization info from David's code
     local_sub = rospy.Subscriber("/nrc/robot_state", LocalizationVector, receive_position, queue_size=1)

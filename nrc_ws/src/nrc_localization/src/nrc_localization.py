@@ -22,7 +22,7 @@ def localization_cb(sensor):
 
     linear_speed = (sensor.right_speed + sensor.left_speed) / 2
     # convert the angular speed to linear
-    wheel_radius = 0.0635 # in meters, just a guess of 2.5 inches
+    wheel_radius = 0.0635 # in meters, about 2.5 inches
     # width of axle is 0.28 meters (doesn't matter for now but who knows)
 
 
